@@ -316,7 +316,7 @@ void PVRSRVDebugPrintf(IMG_UINT32 ui32DebugLevel,
 	IMG_CHAR *pszBuf = gszBuffer;
 	IMG_UINT32 ui32BufSiz = sizeof(gszBuffer);
 
-	if (!(gPVRDebugLevel & ui32DebugLevel))
+	if (ui32DebugLevel > DBGPRIV_WARNING)
 	{
 		return;
 	}
@@ -439,6 +439,18 @@ inline void PVRSRVDebugPrintf(IMG_UINT32 ui32DebugLevel,
 					   const IMG_CHAR *pszFormat,
 					   ...)
 {
+	va_list vaArgs;
+	char buf[512];
+
+	if (ui32DebugLevel > DBGPRIV_WARNING)
+		return;
+
+	va_start(vaArgs, pszFormat);
+	vsnprintf(buf, sizeof(buf), pszFormat, vaArgs);
+	va_end(vaArgs);
+
+	pr_err("PVR_K:(%u) %s:%u %s\n", ui32DebugLevel, pszFullFileName,
+	       (unsigned int)ui32Line, buf);
 }
 #endif /* if 0 */
 

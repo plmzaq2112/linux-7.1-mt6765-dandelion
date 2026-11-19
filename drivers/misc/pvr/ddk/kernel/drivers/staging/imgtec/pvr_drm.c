@@ -264,6 +264,7 @@ static long pvr_compat_ioctl(struct file *file, unsigned int cmd,
 
 static const struct file_operations pvr_drm_fops = {
 	.owner			= THIS_MODULE,
+	.fop_flags		= FOP_UNSIGNED_OFFSET,
 	.open			= drm_open,
 	.release		= drm_release,
 	.unlocked_ioctl		= drm_ioctl,

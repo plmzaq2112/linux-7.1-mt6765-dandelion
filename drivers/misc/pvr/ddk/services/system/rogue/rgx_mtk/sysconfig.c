@@ -209,11 +209,17 @@ PVRSRV_ERROR SysDevInit(void *pvOSDevice, PVRSRV_DEVICE_CONFIG **ppsDevConfig)
 		if (irq_res) {
 			gsDevices[0].ui32IRQ = irq_res->start;
 			g32SysIrq = irq_res->start;
-
-			PVR_LOG(("irq_res = 0x%x", (int)irq_res->start));
+			pr_info("pvr-mtk: irq_res = 0x%x\n", (int)irq_res->start);
 		} else {
-			PVR_DPF((PVR_DBG_ERROR, "irq_res = NULL!"));
-			return PVRSRV_ERROR_INIT_FAILURE;
+			int irq = platform_get_irq(gpsPVRCfgDev, 0);
+			if (irq > 0) {
+				gsDevices[0].ui32IRQ = irq;
+				g32SysIrq = irq;
+				pr_info("pvr-mtk: irq (platform_get_irq) = %d\n", irq);
+			} else {
+				pr_err("pvr-mtk: no IRQ (%d)\n", irq);
+				return PVRSRV_ERROR_INIT_FAILURE;
+			}
 		}
 
 		reg_res = platform_get_resource(gpsPVRCfgDev,
@@ -222,12 +228,14 @@ PVRSRV_ERROR SysDevInit(void *pvOSDevice, PVRSRV_DEVICE_CONFIG **ppsDevConfig)
 		if (reg_res) {
 			gsDevices[0].sRegsCpuPBase.uiAddr = reg_res->start;
 			gsDevices[0].ui32RegsSize = resource_size(reg_res);
+			pr_info("pvr-mtk: reg_res = 0x%x, 0x%x\n",
+				(int)reg_res->start, (int)resource_size(reg_res));
 
 			PVR_LOG(("reg_res = 0x%x, 0x%x",
 					(int)reg_res->start,
 					(int)resource_size(reg_res)));
 		} else {
-			PVR_DPF((PVR_DBG_ERROR, "reg_res = NULL!"));
+			pr_err("pvr-mtk: no MEM resource\n");
 			return PVRSRV_ERROR_INIT_FAILURE;
 		}
 	}
