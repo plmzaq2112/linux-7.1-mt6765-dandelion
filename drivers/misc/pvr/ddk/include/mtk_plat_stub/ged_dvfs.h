@@ -1,0 +1,10 @@
+#ifndef __GED_DVFS_STUB_H
+#define __GED_DVFS_STUB_H
+
+typedef enum {
+	GED_DVFS_COMMIT_NORMAL = 0,
+	GED_DVFS_COMMIT_HARD = 1,
+	GED_DVFS_COMMIT_SOFT = 2,
+} GED_DVFS_COMMIT_TYPE;
+
+#endif

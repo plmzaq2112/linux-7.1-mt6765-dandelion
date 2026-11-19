@@ -1,0 +1,6 @@
+config DRM_PVR_LEGACY
+	tristate "PowerVR vendor DDK 1.13 (MTK)"
+	depends on ARM64 && DRM
+	help
+	  Vendor PowerVR DDK 1.13 (rgx) kernel mode driver for MTK SoCs.
+	  This is the out-of-tree DDK used by the stock firmware.

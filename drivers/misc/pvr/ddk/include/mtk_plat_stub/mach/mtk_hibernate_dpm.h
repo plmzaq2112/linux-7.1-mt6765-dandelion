@@ -1,0 +1,3 @@
+#ifndef __MTK_HIBERNATE_DPM_STUB_H
+#define __MTK_HIBERNATE_DPM_STUB_H
+#endif
