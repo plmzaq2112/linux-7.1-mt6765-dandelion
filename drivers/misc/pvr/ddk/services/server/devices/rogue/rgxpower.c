@@ -640,6 +640,42 @@ PVRSRV_ERROR RGXPostPowerState(IMG_HANDLE				hDevHandle,
 			                         POLL_FLAG_LOG_ERROR | POLL_FLAG_DEBUG_DUMP) != PVRSRV_OK)
 			{
 				PVR_DPF((PVR_DBG_ERROR, "RGXPostPowerState: Polling for 'FW started' flag failed."));
+				pr_info("pvr-mtk: boot stage=%u meta_boot=%08x soft_reset=%08x sys_bus_secure=%08x slc_idle=%08x sidekick_idle=%08x",
+				         OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_FW_BOOT_STAGE_REGISTER),
+				         OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_META_BOOT),
+				         OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_SOFT_RESET),
+				         OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_SYS_BUS_SECURE),
+				         OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_SLC_IDLE),
+				         OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_SIDEKICK_IDLE));
+				{
+					void *pvCPUVA = NULL;
+					IMG_UINT32 ui32GPUVal = 0xDEADBEEF;
+					PVRSRV_ERROR eRd;
+
+					eRd = DevmemAcquireCpuVirtAddr(psDevInfo->psRGXFWCodeMemDesc, &pvCPUVA);
+					if (eRd == PVRSRV_OK)
+					{
+						eRd = RGXReadMETAAddr(psDevInfo,
+						                      (IMG_UINT32)psDevInfo->sFWCodeDevVAddrBase.uiAddr,
+						                      &ui32GPUVal);
+						pr_info("pvr-mtk: FW[0] cpu=%08x gpu=%08x rc=%d\n",
+						        *(IMG_UINT32 *)pvCPUVA, ui32GPUVal, eRd);
+						DevmemReleaseCpuVirtAddr(psDevInfo->psRGXFWCodeMemDesc);
+					}
+					else
+					{
+						pr_info("pvr-mtk: FW code CPU VA unavailable (%d)\n", eRd);
+					}
+
+					pr_info("pvr-mtk: mslvctrl1=%08x mslvirqstatus=%08x\n",
+					        OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_META_SP_MSLVCTRL1),
+					        OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_META_SP_MSLVIRQSTATUS));
+					pr_info("pvr-mtk: bif_cat0=%llx mmu_fault=%llx mmu_cbase=%llx garten=%llx\n",
+					        (unsigned long long)OSReadHWReg64(psDevInfo->pvRegsBaseKM, RGX_CR_BIF_CAT_BASE0),
+					        (unsigned long long)OSReadHWReg64(psDevInfo->pvRegsBaseKM, RGX_CR_MMU_FAULT_STATUS),
+					        (unsigned long long)OSReadHWReg64(psDevInfo->pvRegsBaseKM, RGX_CR_MMU_CBASE_MAPPING),
+					        (unsigned long long)OSReadHWReg64(psDevInfo->pvRegsBaseKM, RGX_CR_MTS_GARTEN_WRAPPER_CONFIG));
+				}
 				eError = PVRSRV_ERROR_TIMEOUT;
 
 #if defined(TRACK_FW_BOOT)

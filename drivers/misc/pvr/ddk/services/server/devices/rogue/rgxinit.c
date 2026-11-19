@@ -956,6 +956,13 @@ static PVRSRV_ERROR RGXSetPowerParams(PVRSRV_RGXDEV_INFO   *psDevInfo,
 #if defined(PDUMP)
 	psDevInfo->sLayerParams.ui32PdumpFlags = PDUMP_FLAGS_CONTINUOUS;
 #endif
+	pr_info("pvr-mtk: BVNC=%u.%u.%u.%u META_val=%d META_sup=%d MIPS_sup=%d RISCV_sup=%d\n",
+	        psDevInfo->sDevFeatureCfg.ui32B, psDevInfo->sDevFeatureCfg.ui32V,
+	        psDevInfo->sDevFeatureCfg.ui32N, psDevInfo->sDevFeatureCfg.ui32C,
+	        (int)RGX_GET_FEATURE_VALUE(psDevInfo, META),
+	        (int)RGX_IS_FEATURE_VALUE_SUPPORTED(psDevInfo, META),
+	        (int)RGX_IS_FEATURE_SUPPORTED(psDevInfo, MIPS),
+	        (int)RGX_IS_FEATURE_SUPPORTED(psDevInfo, RISCV_FW_PROCESSOR));
 	if (RGX_IS_FEATURE_VALUE_SUPPORTED(psDevInfo, META) ||
 	    RGX_IS_FEATURE_SUPPORTED(psDevInfo, RISCV_FW_PROCESSOR))
 	{
@@ -970,6 +977,8 @@ static PVRSRV_ERROR RGXSetPowerParams(PVRSRV_RGXDEV_INFO   *psDevInfo,
 		}
 
 		psDevInfo->sLayerParams.sPCAddr = sKernelMMUCtxPCAddr;
+		pr_info("pvr-mtk: MMU page catalogue phys = 0x%llx\n",
+		        (unsigned long long)sKernelMMUCtxPCAddr.uiAddr);
 	}
 	else
 	{
@@ -1892,6 +1901,8 @@ PVRSRV_ERROR RGXAllocateFWMemoryRegion(PVRSRV_DEVICE_NODE *psDeviceNode,
 {
 	PVRSRV_ERROR eError = PVRSRV_OK;
 	IMG_DEVMEM_LOG2ALIGN_T uiLog2Align = OSGetPageShift();
+	pr_info("pvr-mtk: FW mem '%s' size=%llu align_log2=%u\n",
+	        pszText, (unsigned long long)ui32Size, (unsigned int)uiLog2Align);
 #if defined(SUPPORT_MIPS_CONTIGUOUS_FW_MEMORY) || defined(SUPPORT_TRUSTED_DEVICE)
 	PVRSRV_RGXDEV_INFO *psDevInfo = psDeviceNode->pvDevice;
 #endif
@@ -2953,6 +2964,9 @@ PVRSRV_ERROR RGXInitAllocFWImgMem(PVRSRV_DEVICE_NODE   *psDeviceNode,
 
 	eError = DevmemAcquireDevVirtAddr(psDevInfo->psRGXFWCodeMemDesc,
 			&psDevInfo->sFWCodeDevVAddrBase);
+	pr_info("pvr-mtk: fw code DevVAddr=%llx (want %llx)\n",
+	         (unsigned long long)psDevInfo->sFWCodeDevVAddrBase.uiAddr,
+	         (unsigned long long)RGX_FIRMWARE_RAW_HEAP_BASE);
 	if (eError != PVRSRV_OK)
 	{
 		PVR_DPF((PVR_DBG_ERROR,

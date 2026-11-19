@@ -153,6 +153,7 @@
 #define PVRSRV_RGX_LOG2_CLIENT_CCB_MAX_SIZE_TDM 17
 #define ANDROID
 /* #define SUPPORT_ION */
+#define SUPPORT_MIPS_CONTIGUOUS_FW_MEMORY
 #define PVR_ANDROID_ION_HEADER "../drivers/staging/android/aosp_ion/ion.h"
 #define PVR_ANDROID_ION_PRIV_HEADER "../drivers/staging/android/ion/ion_priv.h"
 #define PVR_ANDROID_ION_USE_SG_LENGTH

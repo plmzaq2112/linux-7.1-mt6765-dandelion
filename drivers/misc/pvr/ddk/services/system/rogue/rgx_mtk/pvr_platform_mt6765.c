@@ -22,6 +22,23 @@ static struct regmap *mfgcfg_rm;
 static void __iomem *gpu_regs;
 static struct device *gpu_dev;
 
+
+static void pvr_mtk_init_apm(void)
+{
+	static const struct { unsigned int off, val; } apm[] = {
+		{ 0x504, 0x01a80000 }, { 0x508, 0x00080010 }, { 0x50c, 0x00100008 },
+		{ 0x510, 0x00b800c8 }, { 0x514, 0x00b000c0 }, { 0x518, 0x00c000c8 },
+		{ 0x51c, 0x00b000b8 }, { 0x520, 0x00d000d0 }, { 0x524, 0x00d000d0 },
+		{ 0x528, 0x00d00000 },
+	};
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(apm); i++)
+		regmap_write(mfgcfg_rm, apm[i].off, apm[i].val);
+	regmap_write(mfgcfg_rm, 0x24, 0x9004001b);
+	regmap_write(mfgcfg_rm, 0x24, 0x8004001b);
+}
+
 int MTKRGXDeviceInit(PVRSRV_DEVICE_CONFIG *psDevConfig)
 {
 	struct platform_device *pdev;
@@ -75,6 +92,9 @@ int MTKRGXDeviceInit(PVRSRV_DEVICE_CONFIG *psDevConfig)
 	regmap_read(mfgcfg_rm, 0x8, &v8);
 	dev_info(dev, "pvr-mtk: MFG_CFG 0x0=%08x 0x4=%08x 0x8=%08x\n", v0, v4, v8);
 
+	pvr_mtk_init_apm();
+	dev_info(dev, "pvr-mtk: APM registers written\n");
+
 	/* CLR register: writing 1 enables the gated clocks */
 	regmap_write(mfgcfg_rm, 0x8, 0xf);
 	regmap_read(mfgcfg_rm, 0x8, &v8);
@@ -122,6 +142,16 @@ PVRSRV_ERROR MTKDevPostPowerState(IMG_HANDLE hSysData,
 				  PVRSRV_DEV_POWER_STATE eCurrentPowerState,
 				  IMG_BOOL bForced)
 {
+	if (eCurrentPowerState == PVRSRV_DEV_POWER_STATE_OFF &&
+	    eNewPowerState == PVRSRV_DEV_POWER_STATE_ON) {
+		/* vendor order: clock -> CG -> APM, right before RGXStart */
+		clk_prepare_enable(mfg_clk);
+		if (mfgcfg_rm) {
+			regmap_write(mfgcfg_rm, 0x8, 0xf);
+			pvr_mtk_init_apm();
+		}
+		pr_info("pvr-mtk: PostPowerState ON (clk+CG+APM reapplied)\n");
+	}
 	return PVRSRV_OK;
 }
 

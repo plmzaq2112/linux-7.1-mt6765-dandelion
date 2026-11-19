@@ -264,6 +264,9 @@ OSLoadFirmware(PVRSRV_DEVICE_NODE *psDeviceNode, const IMG_CHAR *pszBVNCString, 
 		return NULL;
 	}
 
+	pr_info("pvr-mtk: firmware '%s' loaded, %zu bytes\n",
+		pszBVNCString, psFW->size);
+
 	psFWImage = (OS_FW_IMAGE *)psFW;
 
 	if (pfnVerifyFirmware != NULL && !pfnVerifyFirmware(psFWImage))
