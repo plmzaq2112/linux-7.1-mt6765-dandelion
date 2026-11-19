@@ -4436,7 +4436,7 @@ CONFIG_USB_CONFIGFS_F_FS=y
 # USB Gadget precomposed configurations
 #
 # CONFIG_USB_ZERO is not set
-CONFIG_USB_ETH=y
+# CONFIG_USB_ETH is not set
 CONFIG_USB_ETH_RNDIS=y
 # CONFIG_USB_ETH_EEM is not set
 # CONFIG_USB_G_NCM is not set
@@ -4448,7 +4448,7 @@ CONFIG_USB_ETH_RNDIS=y
 # CONFIG_USB_CDC_COMPOSITE is not set
 # CONFIG_USB_G_ACM_MS is not set
 # CONFIG_USB_G_MULTI is not set
-CONFIG_USB_G_HID=y
+# CONFIG_USB_G_HID is not set
 # CONFIG_USB_G_DBGP is not set
 # CONFIG_USB_RAW_GADGET is not set
 # end of USB Gadget precomposed configurations
@@ -6928,3 +6928,8 @@ CONFIG_MEMTEST=y
 #
 # end of Rust hacking
 # end of Kernel hacking
+# CONFIG_USB_MIDI is not set
+# CONFIG_USB_G_WEBCAM is not set
+
+# FT8006S panel
+CONFIG_DRM_PANEL_FITIPOWER_FT8006S=y

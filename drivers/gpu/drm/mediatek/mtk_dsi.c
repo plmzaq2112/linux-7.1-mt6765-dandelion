@@ -707,13 +707,20 @@ static int mtk_dsi_poweron(struct mtk_dsi *dsi)
 	dsi->data_rate = DIV_ROUND_UP_ULL(dsi->vm.pixelclock * bit_per_pixel,
 					  dsi->lanes);
 
+	dev_info(dev, "poweron: pixelclock=%lu bpp=%u lanes=%u data_rate=%u\n",
+		 dsi->vm.pixelclock, bit_per_pixel, dsi->lanes, dsi->data_rate);
+
 	ret = clk_set_rate(dsi->hs_clk, dsi->data_rate);
 	if (ret < 0) {
 		dev_err(dev, "Failed to set data rate: %d\n", ret);
 		goto err_refcount;
 	}
+	dev_info(dev, "hs_clk requested=%u actual=%lu\n", dsi->data_rate,
+		 clk_get_rate(dsi->hs_clk));
 
-	phy_power_on(dsi->phy);
+	ret = phy_power_on(dsi->phy);
+	if (ret < 0)
+		dev_err(dev, "phy_power_on failed: %d\n", ret);
 
 	ret = clk_prepare_enable(dsi->engine_clk);
 	if (ret < 0) {
