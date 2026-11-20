@@ -168,12 +168,15 @@ static INLINE PVRSRV_ERROR DevmemFwAllocateExportable(PVRSRV_DEVICE_NODE *psDevi
 		PVR_DPF_RETURN_RC(eError);
 	}
 
+	/* Always use the requested alignment as the allocation page size.
+	 * For MIPS this gives 64K pages -> CMA (physically contiguous, low memory),
+	 * which the MIPS bootloader needs. */
+	pr_info("pvr-mtk: FW alloc '%s' align=%llu page_log2=%u\n",
+	        pszText, (unsigned long long)uiAlign, (unsigned int)ExactLog2(uiAlign));
 	eError = DevmemAllocateExportable(psDeviceNode,
 									  uiSize,
 									  uiAlign,
-									  RGX_IS_FEATURE_SUPPORTED(psDevInfo, MIPS) ?
-									  ExactLog2(uiAlign) :
-									  DevmemGetHeapLog2PageSize(psFwHeap),
+									  ExactLog2(uiAlign),
 									  uiFlags,
 									  pszText,
 									  ppsMemDescPtr);

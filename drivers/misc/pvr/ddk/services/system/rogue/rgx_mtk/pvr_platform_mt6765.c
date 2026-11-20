@@ -7,6 +7,7 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
+#include <linux/dma-mapping.h>
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/of.h>
@@ -73,6 +74,10 @@ int MTKRGXDeviceInit(PVRSRV_DEVICE_CONFIG *psDevConfig)
 		dev_err(dev, "pvr-mtk: no mfgpll clock\n");
 		return PTR_ERR(mfgpll_clk);
 	}
+
+	/* The MIPS firmware processor is 32-bit: keep its FW/CMA memory below 4GB */
+	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
+	dev_info(dev, "pvr-mtk: dma_set_mask(32)=%d\n", ret);
 
 	/* power domains are described in DT; make sure they are on */
 	pm_runtime_enable(dev);

@@ -1712,6 +1712,9 @@ _AllocOSPage_CMA(PMR_OSPAGEARRAY_DATA *psPageArrayData,
 		virt_addr = NULL;
 #else
 		virt_addr = dma_alloc_coherent(dev, alloc_size, &bus_addr, gfp_flags);
+		pr_info("pvr-mtk: cma alloc dev=%s size=%zu gfp=%#x va=%px dma=0x%llx\n",
+		        dev ? dev_name(dev) : "NULL", alloc_size, gfp_flags,
+		        virt_addr, (unsigned long long)bus_addr);
 #endif
 		if (virt_addr == NULL)
 		{

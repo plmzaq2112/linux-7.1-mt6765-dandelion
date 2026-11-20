@@ -1901,8 +1901,6 @@ PVRSRV_ERROR RGXAllocateFWMemoryRegion(PVRSRV_DEVICE_NODE *psDeviceNode,
 {
 	PVRSRV_ERROR eError = PVRSRV_OK;
 	IMG_DEVMEM_LOG2ALIGN_T uiLog2Align = OSGetPageShift();
-	pr_info("pvr-mtk: FW mem '%s' size=%llu align_log2=%u\n",
-	        pszText, (unsigned long long)ui32Size, (unsigned int)uiLog2Align);
 #if defined(SUPPORT_MIPS_CONTIGUOUS_FW_MEMORY) || defined(SUPPORT_TRUSTED_DEVICE)
 	PVRSRV_RGXDEV_INFO *psDevInfo = psDeviceNode->pvDevice;
 #endif
@@ -1913,6 +1911,9 @@ PVRSRV_ERROR RGXAllocateFWMemoryRegion(PVRSRV_DEVICE_NODE *psDeviceNode,
 		uiLog2Align = RGXMIPSFW_LOG2_PAGE_SIZE_64K;
 	}
 #endif
+
+	pr_info("pvr-mtk: FW mem '%s' size=%llu align_log2=%u\n",
+	        pszText, (unsigned long long)ui32Size, (unsigned int)uiLog2Align);
 
 #if defined(SUPPORT_DEDICATED_FW_MEMORY)
 	PVR_UNREFERENCED_PARAMETER(eRegion);

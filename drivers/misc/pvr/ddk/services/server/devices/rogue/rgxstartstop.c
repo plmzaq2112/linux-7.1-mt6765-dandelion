@@ -275,6 +275,9 @@ static void RGXInitMipsProcWrapper(const void *hPrivate)
 	 */
 
 	RGXAcquireBootRemapAddr(hPrivate, &sPhyAddr);
+	pr_info("pvr-mtk: MIPS bus=%u boot_remap_pa=0x%llx\n",
+	        (unsigned int)RGXGetDevicePhysBusWidth(hPrivate),
+	        (unsigned long long)sPhyAddr.uiAddr);
 
 #if defined(SUPPORT_TRUSTED_DEVICE)
 	/* Do not mark accesses to a FW code remap region as DRM accesses */
@@ -318,6 +321,8 @@ static void RGXInitMipsProcWrapper(const void *hPrivate)
 	 */
 
 	RGXAcquireDataRemapAddr(hPrivate, &sPhyAddr);
+	pr_info("pvr-mtk: MIPS data_remap_pa=0x%llx\n",
+	        (unsigned long long)sPhyAddr.uiAddr);
 
 #if defined(SUPPORT_TRUSTED_DEVICE)
 	if (RGXGetDevicePhysBusWidth(hPrivate) > 32)
@@ -350,6 +355,8 @@ static void RGXInitMipsProcWrapper(const void *hPrivate)
 	 */
 
 	RGXAcquireCodeRemapAddr(hPrivate, &sPhyAddr);
+	pr_info("pvr-mtk: MIPS code_remap_pa=0x%llx\n",
+	        (unsigned long long)sPhyAddr.uiAddr);
 
 #if defined(SUPPORT_TRUSTED_DEVICE)
 	/* Do not mark accesses to a FW code remap region as DRM accesses */
