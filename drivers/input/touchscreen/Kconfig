@@ -1412,4 +1412,14 @@ config TOUCHSCREEN_HIMAX_HX83112B
 	  To compile this driver as a module, choose M here: the
 	  module will be called himax_hx83112b.
 
+
+config TOUCHSCREEN_FTS
+	tristate "FocalTech FT8006S SPI touchscreen"
+	depends on SPI
+	help
+	  Say Y here to enable the FocalTech FT8006S SPI touchscreen
+	  (used on Xiaomi Redmi 9A / dandelion).
+
+	  If unsure, say N.
+
 endif
