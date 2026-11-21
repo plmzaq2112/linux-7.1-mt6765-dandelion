@@ -16,6 +16,7 @@
 
 #include "mtk_mfgsys.h"
 #include "sysconfig.h"
+#include "mtk_mfg_mtcmos.h"
 
 static struct clk *mfg_clk;
 static struct clk *mfgpll_clk;
@@ -24,8 +25,25 @@ static void __iomem *gpu_regs;
 static struct device *gpu_dev;
 
 
+static int pvr_apm = 0;
+module_param(pvr_apm, int, 0644);
+MODULE_PARM_DESC(pvr_apm,
+	"MTK HW APM: 0=off (default), 1=full (dust+0x24), 2=dust-only (0x504-0x528, no 0x24)");
+
+static int pvr_rate_mhz = 390;
+module_param(pvr_rate_mhz, int, 0644);
+MODULE_PARM_DESC(pvr_rate_mhz, "MFG clock in MHz (default 390; FW runtime cfg says 400)");
+
+static struct mtk_mfg_mtcmos g_mtcmos;
+
+static int skip_mtcmos = 0;
+module_param(skip_mtcmos, int, 0644);
+MODULE_PARM_DESC(skip_mtcmos, "skip explicit MFG MTCMOS bring-up (A/B knob)");
+
 static void pvr_mtk_init_apm(void)
 {
+	if (pvr_apm <= 0)
+		return;
 	static const struct { unsigned int off, val; } apm[] = {
 		{ 0x504, 0x01a80000 }, { 0x508, 0x00080010 }, { 0x50c, 0x00100008 },
 		{ 0x510, 0x00b800c8 }, { 0x514, 0x00b000c0 }, { 0x518, 0x00c000c8 },
@@ -36,8 +54,13 @@ static void pvr_mtk_init_apm(void)
 
 	for (i = 0; i < ARRAY_SIZE(apm); i++)
 		regmap_write(mfgcfg_rm, apm[i].off, apm[i].val);
-	regmap_write(mfgcfg_rm, 0x24, 0x9004001b);
-	regmap_write(mfgcfg_rm, 0x24, 0x8004001b);
+	/* pvr_apm=2: dust-only (no 0x24 seq) for RASCALDUST A/B.
+	 * pvr_apm=1: legacy full sequence (may power-gate MFG_CORE0).
+	 */
+	if (pvr_apm == 1) {
+		regmap_write(mfgcfg_rm, 0x24, 0x9004001b);
+		regmap_write(mfgcfg_rm, 0x24, 0x8004001b);
+	}
 }
 
 int MTKRGXDeviceInit(PVRSRV_DEVICE_CONFIG *psDevConfig)
@@ -86,7 +109,7 @@ int MTKRGXDeviceInit(PVRSRV_DEVICE_CONFIG *psDevConfig)
 
 	ret = clk_set_parent(mfg_clk, mfgpll_clk);
 	dev_info(dev, "pvr-mtk: set_parent=%d\n", ret);
-	ret = clk_set_rate(mfg_clk, 390000000);
+	ret = clk_set_rate(mfg_clk, (unsigned long)pvr_rate_mhz * 1000000UL);
 	dev_info(dev, "pvr-mtk: set_rate=%d rate=%lu\n", ret, clk_get_rate(mfg_clk));
 
 	ret = clk_prepare_enable(mfg_clk);
@@ -98,12 +121,27 @@ int MTKRGXDeviceInit(PVRSRV_DEVICE_CONFIG *psDevConfig)
 	dev_info(dev, "pvr-mtk: MFG_CFG 0x0=%08x 0x4=%08x 0x8=%08x\n", v0, v4, v8);
 
 	pvr_mtk_init_apm();
-	dev_info(dev, "pvr-mtk: APM registers written\n");
+	dev_info(dev, "pvr-mtk: APM mode=%d (%s)\n", pvr_apm,
+		 pvr_apm == 1 ? "full" : (pvr_apm == 2 ? "dust-only" : "off"));
 
 	/* CLR register: writing 1 enables the gated clocks */
 	regmap_write(mfgcfg_rm, 0x8, 0xf);
 	regmap_read(mfgcfg_rm, 0x8, &v8);
 	dev_info(dev, "pvr-mtk: MFG_CFG 0x8 after CLR=%08x\n", v8);
+
+	/* Explicit MFG MTCMOS (vendor clk-mt6765-pg.c order). A/B: skip_mtcmos=1 */
+	if (!skip_mtcmos) {
+		int mret = mtk_mfg_mtcmos_probe(dev, &g_mtcmos);
+
+		if (mret == 0)
+			mret = mtk_mfg_mtcmos_power_on(&g_mtcmos);
+		if (mret)
+			dev_err(dev, "pvr-mtk: MTCMOS bring-up failed (%d)\n", mret);
+		else
+			mtk_mfg_mtcmos_dump(&g_mtcmos, "post-on");
+	} else {
+		dev_info(dev, "pvr-mtk: MTCMOS skipped (skip_mtcmos=1)\n");
+	}
 
 	gpu_regs = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(gpu_regs)) {
@@ -127,6 +165,10 @@ int MTKRGXDeviceInit(PVRSRV_DEVICE_CONFIG *psDevConfig)
 
 int MTKRGXDeviceDeInit(PVRSRV_DEVICE_CONFIG *psDevConfig)
 {
+	if (g_mtcmos.powered)
+		mtk_mfg_mtcmos_power_off(&g_mtcmos);
+	if (g_mtcmos.spm || g_mtcmos.infra)
+		mtk_mfg_mtcmos_remove(&g_mtcmos);
 	if (mfg_clk && !IS_ERR(mfg_clk))
 		clk_disable_unprepare(mfg_clk);
 	pm_runtime_put_sync(gpu_dev);
@@ -151,6 +193,8 @@ PVRSRV_ERROR MTKDevPostPowerState(IMG_HANDLE hSysData,
 	    eNewPowerState == PVRSRV_DEV_POWER_STATE_ON) {
 		/* vendor order: clock -> CG -> APM, right before RGXStart */
 		clk_prepare_enable(mfg_clk);
+		if (!skip_mtcmos && g_mtcmos.spm && !g_mtcmos.powered)
+			mtk_mfg_mtcmos_power_on(&g_mtcmos);
 		if (mfgcfg_rm) {
 			regmap_write(mfgcfg_rm, 0x8, 0xf);
 			pvr_mtk_init_apm();
@@ -213,3 +257,28 @@ static void pvr_gpu_mem_dump(void)
 
 unsigned int (*mtk_get_gpu_memory_usage_fp)(void) = pvr_gpu_mem_usage;
 void (*mtk_dump_gpu_memory_usage_fp)(void) = pvr_gpu_mem_dump;
+
+/*
+ * Debug helper: sample the SPM MTCMOS state at FW boot time.
+ * MFG_CORE0 (bit 7 of PWR_STATUS) is the domain the MIPS lives in.
+ */
+void mtk_pvr_dump_spm(const char *tag)
+{
+	static void __iomem *spm;
+	u32 st, st2, c0, mfg, async;
+
+	if (!spm)
+		spm = ioremap(0x10006000, 0x1000);
+	if (!spm)
+		return;
+
+	st    = readl(spm + 0x180);
+	st2   = readl(spm + 0x184);
+	c0    = readl(spm + 0x34c);
+	mfg   = readl(spm + 0x338);
+	async = readl(spm + 0x334);
+
+	pr_info("pvr-mtk[%s]: SPM st=%08x/2nd=%08x MFG=%d CORE0=%d ASYNC=%d CORE0_CON=%08x MFG_CON=%08x ASYNC_CON=%08x\n",
+		tag, st, st2, !!(st & BIT(4)), !!(st & BIT(7)), !!(st & BIT(23)),
+		c0, mfg, async);
+}

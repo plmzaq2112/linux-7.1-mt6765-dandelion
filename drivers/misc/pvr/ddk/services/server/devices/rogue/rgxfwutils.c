@@ -4453,6 +4453,10 @@ PVRSRV_ERROR PVRSRVRGXFrameworkCreateKM(PVRSRV_DEVICE_NODE	*psDeviceNode,
 	return PVRSRV_OK;
 }
 
+int g_pvrNoSync = 0;
+module_param_named(pvr_no_sync, g_pvrNoSync, int, 0644);
+MODULE_PARM_DESC(pvr_no_sync, "treat GP poll timeouts / FW state checks as success (bring-up)");
+
 PVRSRV_ERROR IMG_CALLCONV RGXPollForGPCommandCompletion(PVRSRV_DEVICE_NODE  *psDevNode,
 												volatile IMG_UINT32	__iomem *pui32LinMemAddr,
 												IMG_UINT32			ui32Value,
@@ -4486,6 +4490,12 @@ PVRSRV_ERROR IMG_CALLCONV RGXPollForGPCommandCompletion(PVRSRV_DEVICE_NODE  *psD
 		}
 
 		RGXSendCommandsFromDeferredList(psDevInfo, IMG_FALSE);
+	}
+
+	if (eError == PVRSRV_ERROR_TIMEOUT && g_pvrNoSync)
+	{
+		pr_info("pvr-mtk: no-sync: GP poll timeout treated as complete\n");
+		eError = PVRSRV_OK;
 	}
 
 	if (eError != PVRSRV_OK)

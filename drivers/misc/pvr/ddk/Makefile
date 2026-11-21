@@ -64,6 +64,7 @@ pvrsrvkm-y += \
 	generated/rogue/dmabuf_bridge/server_dmabuf_bridge.o \
 	services/system/rogue/rgx_mtk/sysconfig.o \
 	services/system/rogue/rgx_mtk/pvr_platform_mt6765.o \
+	services/system/rogue/rgx_mtk/mtk_mfg_mtcmos.o \
 	services/system/rogue/common/vmm_type_stub.o \
 	services/system/rogue/common/env/linux/interrupt_support.o \
 	services/system/rogue/common/env/linux/dma_support.o \

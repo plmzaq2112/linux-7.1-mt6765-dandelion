@@ -255,6 +255,25 @@ IMG_BOOL RGXFwIrqEventRx(PVRSRV_RGXDEV_INFO *psDevInfo)
 	{
 		/* acknowledge and clear the interrupt */
 		OSWriteHWReg32(psDevInfo->pvRegsBaseKM, ui32IRQClearReg, ui32IRQClearMask);
+#if !defined(NO_HARDWARE)
+		/* S3(HYPOTHESIS): level-triggered GIC IRQ can stay asserted if GPU
+		 * EVENT_STATUS source remains set. RGX_CR_EVENT_CLEAR is absent from
+		 * this BVNC hwdefs; attempt W1C on EVENT_STATUS itself and log. */
+		{
+			IMG_UINT32 ui32EvtSt = OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_EVENT_STATUS);
+			if (ui32EvtSt != 0U)
+			{
+#if defined(RGX_CR_EVENT_CLEAR)
+				OSWriteHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_EVENT_CLEAR, ui32EvtSt);
+				(void)OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_EVENT_CLEAR);
+#else
+				OSWriteHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_EVENT_STATUS, ui32EvtSt);
+				(void)OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_EVENT_STATUS);
+#endif
+				PVR_DPF((PVR_DBG_ERROR, "RGX_LISR[S3DBG] evt_clear w1c=0x%x", ui32EvtSt));
+			}
+		}
+#endif
 	}
 	else
 	{
@@ -423,6 +442,21 @@ static IMG_BOOL RGX_LISRHandler (void *pvData)
 		}
 	}
 
+#if !defined(NO_HARDWARE)
+	{
+		static IMG_UINT32 ui32S3IrqDbg;
+		if (psDevInfo->bRGXPowered && ((ui32S3IrqDbg++ & 0x3FU) == 0U))
+		{
+			IMG_UINT32 ui32Evt = OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_EVENT_STATUS);
+			IMG_UINT32 ui32MipsEn = OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_MIPS_WRAPPER_IRQ_ENABLE);
+			IMG_UINT32 ui32MipsSt = OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_MIPS_WRAPPER_IRQ_STATUS);
+			PVR_DPF((PVR_DBG_ERROR, "RGX_LISR[S3DBG] #%u evt=0x%x mips_en=0x%x mips_st=0x%x hw=%u",
+			         ui32S3IrqDbg - 1U, ui32Evt, ui32MipsEn, ui32MipsSt,
+			         (IMG_UINT32)psDevInfo->bRGXPowered));
+		}
+	}
+#endif
+
 	if (RGXFwIrqEventRx(psDevInfo))
 	{
 #if defined(PVRSRV_DEBUG_LISR_EXECUTION)
@@ -431,27 +465,24 @@ static IMG_BOOL RGX_LISRHandler (void *pvData)
 #endif
 
 		bInterruptProcessed = SampleIRQCount(psDevInfo);
+#if !defined(NO_HARDWARE)
+		{
+			static IMG_UINT32 ui32S3IrqSampleDbg;
+			if (((ui32S3IrqSampleDbg++ & 0x3FU) == 0U))
+			{
+				PVR_DPF((PVR_DBG_ERROR, "RGX_LISR[S3DBG] sample_processed=%u", (IMG_UINT32)bInterruptProcessed));
+			}
+		}
+#endif
 
 		if (!bInterruptProcessed)
 		{
 #if defined(PVRSRV_DEBUG_LISR_EXECUTION)
 			g_sLISRExecutionInfo.ui32State |= RGX_LISR_COUNTS_EQUAL;
 #endif
-
-#if defined(RGX_FW_IRQ_OS_COUNTERS) && !defined(RGX_IRQ_HYPERV_HANDLER)
-			/* if per-OS GPU IRQ counters are used, but the Host OS is still the
-			 * one that handles and clears the HW CPU IRQ, this IRQ request must be
-			 * marked as processed. Consider an interrupt aimed at a Guest OS that
-			 * doesn't require the MISR to run on the Host, only clearing the IRQ.
-			 *
-			 * This prevents the HW CPU IRQ bit being left set and marking this as
-			 * a spurious interrupt, which in time, could lead the OS to assume
-			 * a hardware failure occurred and disable the interrupt line.
-			 */
+			/* S3: IRQ source was acked/cleared by RGXFwIrqEventRx. Return
+			 * handled to avoid spurious IRQ_NONE on level-triggered GIC. */
 			return IMG_TRUE;
-#else
-			return bInterruptProcessed;
-#endif
 		}
 
 		bInterruptProcessed = IMG_TRUE;

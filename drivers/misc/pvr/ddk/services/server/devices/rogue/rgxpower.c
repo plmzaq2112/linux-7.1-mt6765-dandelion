@@ -47,7 +47,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <stddef.h>
 #endif
 
+#if defined(LINUX)
+#include <linux/vmalloc.h>
+#include <linux/mm.h>
+#endif
+
+
 #include "rgxpower.h"
+#include "rgxmem.h"
 #include "rgxinit.h"
 #include "rgx_fwif_km.h"
 #include "rgxfwutils.h"
@@ -64,6 +71,165 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "rgxfwimageutils.h"
 #include "sync.h"
 #include "rgxdefs_km.h"
+#include <linux/io.h>
+#include <linux/delay.h>
+#include "mmu_common.h"
+
+extern int g_pvrNoSync;
+
+static int pvr_no_apm = 0;
+module_param(pvr_no_apm, int, 0644);
+MODULE_PARM_DESC(pvr_no_apm, "clear RGXFWIF_INICFG_POW_RASCALDUST before FW boots");
+
+static int pvr_state_wait = 1;
+module_param(pvr_state_wait, int, 0644);
+MODULE_PARM_DESC(pvr_state_wait, "accept ePowState transitions as completion (FW does not ack the prim)");
+
+static int pvr_kick = 0;
+module_param(pvr_kick, int, 0644);
+MODULE_PARM_DESC(pvr_kick, "repeatedly kick MTS_SCHEDULE after POW and log readback");
+
+static int pvr_fwstate = 0;
+module_param(pvr_fwstate, int, 0644);
+MODULE_PARM_DESC(pvr_fwstate, "dump FWIF init/data structs as hex at POW entry (A7)");
+
+static void pvr_hexdump(const char *name, const void *ptr, unsigned int size,
+			unsigned int max_bytes)
+{
+	const u8 *p = (const u8 *)ptr;
+	unsigned int n, i, j;
+
+	if (p == NULL) {
+		pr_info("FWSTATE %s: <null>\n", name);
+		return;
+	}
+	n = size < max_bytes ? size : max_bytes;
+	pr_info("FWSTATE %s ptr=%px size=%u dump=%u\n", name, ptr, size, n);
+	for (i = 0; i < n; i += 16) {
+		char line[16 * 3 + 1];
+		char *h = line;
+
+		for (j = 0; j < 16 && i + j < n; j++)
+			h += scnprintf(h, sizeof(line) - (size_t)(h - line), "%02x ",
+				       p[i + j]);
+		*h = '\0';
+		pr_info("FWSTATE %s +%03x: %s\n", name, i, line);
+	}
+}
+
+static void pvr_dump_fwstate(PVRSRV_RGXDEV_INFO *psDevInfo)
+{
+	pr_info("FWSTATE key: cfg=%08x ext=%08x osflg=%08x pow=%u kcmds=%u lat=%u clk=%u dusts=%u\n",
+		psDevInfo->psRGXFWIfFwSysData ? psDevInfo->psRGXFWIfFwSysData->ui32ConfigFlags : 0,
+		psDevInfo->psRGXFWIfFwSysData ? psDevInfo->psRGXFWIfFwSysData->ui32ConfigFlagsExt : 0,
+		psDevInfo->psRGXFWIfFwOsData ? psDevInfo->psRGXFWIfFwOsData->ui32FwOsConfigFlags : 0,
+		psDevInfo->psRGXFWIfFwSysData ? (unsigned)psDevInfo->psRGXFWIfFwSysData->ePowState : 999,
+		psDevInfo->psRGXFWIfFwOsData ? psDevInfo->psRGXFWIfFwOsData->ui32KCCBCmdsExecuted : 0,
+		psDevInfo->psRGXFWIfRuntimeCfg ? psDevInfo->psRGXFWIfRuntimeCfg->ui32ActivePMLatencyms : 0,
+		psDevInfo->psRGXFWIfRuntimeCfg ? psDevInfo->psRGXFWIfRuntimeCfg->ui32CoreClockSpeed : 0,
+		psDevInfo->psRGXFWIfRuntimeCfg ? psDevInfo->psRGXFWIfRuntimeCfg->ui32DefaultDustsNumInit : 0);
+
+	pvr_hexdump("SYSDATA", psDevInfo->psRGXFWIfFwSysData,
+		    psDevInfo->psRGXFWIfFwSysData ? sizeof(RGXFWIF_SYSDATA) : 0, 512);
+	pvr_hexdump("OSDATA", psDevInfo->psRGXFWIfFwOsData,
+		    psDevInfo->psRGXFWIfFwOsData ? sizeof(RGXFWIF_OSDATA) : 0, 512);
+	pvr_hexdump("SYSINIT", psDevInfo->psRGXFWIfSysInit,
+		    psDevInfo->psRGXFWIfSysInit ? sizeof(RGXFWIF_SYSINIT) : 0, 512);
+	pvr_hexdump("OSINIT", psDevInfo->psRGXFWIfOsInit,
+		    psDevInfo->psRGXFWIfOsInit ? sizeof(RGXFWIF_OSINIT) : 0, 512);
+	pvr_hexdump("RTCFG", psDevInfo->psRGXFWIfRuntimeCfg,
+		    psDevInfo->psRGXFWIfRuntimeCfg ? sizeof(RGXFWIF_RUNTIME_CFG) : 0, 256);
+}
+
+static int pvr_fwtrace = 0;
+module_param(pvr_fwtrace, int, 0644);
+MODULE_PARM_DESC(pvr_fwtrace, "enable FW trace logging and dump FW trace around POW");
+
+
+static void pvr_dump_fw_trace(PVRSRV_RGXDEV_INFO *psDevInfo, const char *pcTag)
+{
+	RGXFWIF_TRACEBUF *psTb = psDevInfo->psRGXFWIfTraceBufCtl;
+	IMG_UINT32 ui32Size;
+	IMG_UINT32 tid;
+
+	if (psTb == NULL)
+	{
+		pr_info("pvr-mtk: FWT %s: no control buffer\n", pcTag);
+		return;
+	}
+
+	ui32Size = psTb->ui32TraceBufSizeInDWords;
+	pr_info("pvr-mtk: FWT %s logtype=%08x size=%u flags=%08x threads=%u ctl_fw=%08x\n",
+	        pcTag, psTb->ui32LogType, ui32Size, psTb->ui32TracebufFlags,
+	        (unsigned)RGXFW_THREAD_NUM,
+	        (psDevInfo->psRGXFWIfSysInit != NULL) ?
+	            psDevInfo->psRGXFWIfSysInit->sTraceBufCtl.ui32Addr : 0U);
+
+	if ((psTb->ui32LogType & RGXFWIF_LOG_TYPE_GROUP_MASK) == 0)
+	{
+		pr_info("pvr-mtk: FWT %s: logging disabled\n", pcTag);
+		return;
+	}
+	if (ui32Size == 0)
+	{
+		pr_info("pvr-mtk: FWT %s: size 0\n", pcTag);
+		return;
+	}
+
+	for (tid = 0; tid < RGXFW_THREAD_NUM; tid++)
+	{
+		void *pvCpu = NULL;
+		IMG_UINT32 i, ui32Start, ui32Count;
+		IMG_UINT32 ui32Ptr = psTb->sTraceBuf[tid].ui32TracePointer;
+
+		pr_info("pvr-mtk: FWT %s tid=%u ptr=%u buf_fw=%08x field=%016lx\n",
+		        pcTag, tid, ui32Ptr,
+		        psTb->sTraceBuf[tid].pui32RGXFWIfTraceBuffer.ui32Addr,
+		        (unsigned long)psTb->sTraceBuf[tid].pui32TraceBuffer);
+
+		if (psDevInfo->psRGXFWIfTraceBufferMemDesc[tid] == NULL)
+		{
+			pr_info("pvr-mtk: FWT %s tid=%u: no memdesc\n", pcTag, tid);
+			continue;
+		}
+		if (DevmemAcquireCpuVirtAddr(psDevInfo->psRGXFWIfTraceBufferMemDesc[tid], &pvCpu) != PVRSRV_OK ||
+		    pvCpu == NULL)
+		{
+			pr_info("pvr-mtk: FWT %s tid=%u: acquire cpu va failed\n", pcTag, tid);
+			continue;
+		}
+		pr_info("pvr-mtk: FWT %s tid=%u fresh cpu=%px\n", pcTag, tid, pvCpu);
+
+		if (((unsigned long)pvCpu >> 48) == 0xffffUL)
+		{
+			IMG_UINT32 *pui32 = (IMG_UINT32 *)pvCpu;
+
+			ui32Count = 160;
+			if (ui32Count > ui32Size)
+			{
+				ui32Count = ui32Size;
+			}
+			ui32Start = (ui32Ptr + ui32Size - ui32Count) % ui32Size;
+
+			for (i = 0; i < ui32Count; i += 8)
+			{
+				pr_info("FWTRAW t%u %u: %08x %08x %08x %08x %08x %08x %08x %08x\n",
+				        tid, ui32Start + i,
+				        pui32[(ui32Start + i + 0) % ui32Size],
+				        pui32[(ui32Start + i + 1) % ui32Size],
+				        pui32[(ui32Start + i + 2) % ui32Size],
+				        pui32[(ui32Start + i + 3) % ui32Size],
+				        pui32[(ui32Start + i + 4) % ui32Size],
+				        pui32[(ui32Start + i + 5) % ui32Size],
+				        pui32[(ui32Start + i + 6) % ui32Size],
+				        pui32[(ui32Start + i + 7) % ui32Size]);
+			}
+		}
+		DevmemReleaseCpuVirtAddr(psDevInfo->psRGXFWIfTraceBufferMemDesc[tid]);
+	}
+}
+
+static void pvr_maybe_move_prim(PVRSRV_RGXDEV_INFO *psDevInfo);
 
 #if defined(PVRSRV_ENABLE_PROCESS_STATS)
 #include "process_stats.h"
@@ -135,6 +301,8 @@ static INLINE PVRSRV_ERROR RGXDoStop(PVRSRV_DEVICE_NODE *psDeviceNode)
 {
 	PVRSRV_ERROR eError;
 
+	pr_info("pvr-mtk[S3FLOW]: RGXDoStop enter\n");
+
 #if defined(SUPPORT_TRUSTED_DEVICE) && !defined(NO_HARDWARE) && !defined(SUPPORT_SECURITY_VALIDATION)
 	PVRSRV_DEVICE_CONFIG *psDevConfig = psDeviceNode->psDevConfig;
 	PVRSRV_VZ_RET_IF_MODE(GUEST, PVRSRV_OK);
@@ -151,6 +319,7 @@ static INLINE PVRSRV_ERROR RGXDoStop(PVRSRV_DEVICE_NODE *psDeviceNode)
 	PVRSRV_VZ_RET_IF_MODE(GUEST, PVRSRV_OK);
 
 	eError = RGXStop(&psDevInfo->sLayerParams);
+	pr_info("pvr-mtk[S3FLOW]: RGXStop ret=%d\n", eError);
 #endif
 
 	return eError;
@@ -186,7 +355,7 @@ PVRSRV_ERROR RGXPrePowerState(IMG_HANDLE				hDevHandle,
 		sPowCmd.uCmdData.sPowData.ePowType = RGXFWIF_POW_OFF_REQ;
 		sPowCmd.uCmdData.sPowData.uPowerReqData.bForced = bForced;
 
-		eError = SyncPrimSet(psDevInfo->psPowSyncPrim, 0);
+	eError = SyncPrimSet(psDevInfo->psPowSyncPrim, 0);
 		if (eError != PVRSRV_OK)
 		{
 			PVR_DPF((PVR_DBG_ERROR, "%s: Failed to set Power sync prim",
@@ -211,6 +380,17 @@ PVRSRV_ERROR RGXPrePowerState(IMG_HANDLE				hDevHandle,
 								  psDevInfo->psPowSyncPrim->pui32LinAddr,
 								  0x1, 0xFFFFFFFF);
 
+		if (eError != PVRSRV_OK && pvr_state_wait)
+		{
+			unsigned int st = (unsigned int)psFwSysData->ePowState;
+			if (st == RGXFWIF_POW_OFF || st == RGXFWIF_POW_IDLE ||
+			    st == RGXFWIF_POW_FORCED_IDLE)
+			{
+				pr_info("pvr-mtk: state-wait: powoff accepted with pow=%u\n", st);
+				eError = PVRSRV_OK;
+			}
+		}
+
 		/* Check the Power state after the answer */
 		if (eError == PVRSRV_OK)
 		{
@@ -228,6 +408,9 @@ PVRSRV_ERROR RGXPrePowerState(IMG_HANDLE				hDevHandle,
 					IMG_UINT32 ui32IrqCnt;
 
 					get_irq_cnt_val(ui32IrqCnt, ui32idx, psDevInfo);
+					pr_info("pvr-mtk: IRQCNT idx=%u expect=%u host=%u\n",
+					        ui32idx, ui32IrqCnt,
+					        psDevInfo->aui32SampleIRQCount[ui32idx]);
 
 					/* Wait for the pending FW processor to host interrupts to come back. */
 					eError = PVRSRVPollForValueKM(psDeviceNode,
@@ -246,6 +429,33 @@ PVRSRV_ERROR RGXPrePowerState(IMG_HANDLE				hDevHandle,
 								ui32IrqCnt));
 
 						RGX_WaitForInterruptsTimeout(psDevInfo);
+						/* S3: the FW may update its IRQ counter after we acked the
+						 * level IRQ (no second IRQ is raised). Re-sample once and,
+						 * if it moved, align the host counter so the power
+						 * transition can complete. */
+						{
+							IMG_UINT32 ui32Now;
+
+							get_irq_cnt_val(ui32Now, ui32idx, psDevInfo);
+							pr_info("pvr-mtk: IRQCNT after-timeout idx=%u now=%u host=%u ev=%08x wst=%08x\n",
+							        ui32idx, ui32Now,
+							        psDevInfo->aui32SampleIRQCount[ui32idx],
+							        OSReadHWReg32(psDevInfo->pvRegsBaseKM, 0x130),
+							        OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_MIPS_WRAPPER_IRQ_STATUS));
+							if (psDevInfo->aui32SampleIRQCount[ui32idx] != ui32Now)
+							{
+								psDevInfo->aui32SampleIRQCount[ui32idx] = ui32Now;
+							}
+							/* The timeout handler above already resamples the
+							 * counter; if the counts now agree the pending IRQ
+							 * has been accounted for, so clear the stale error. */
+							if (psDevInfo->aui32SampleIRQCount[ui32idx] == ui32Now)
+							{
+								pr_info("pvr-mtk: IRQ counts aligned (host=%u), continue\n",
+								        ui32Now);
+								eError = PVRSRV_OK;
+							}
+						}
 					}
 				}
 #endif /* NO_HARDWARE */
@@ -273,6 +483,26 @@ PVRSRV_ERROR RGXPrePowerState(IMG_HANDLE				hDevHandle,
 					/* Power down failures are treated as successful since the power was removed but logged. */
 					PVR_DPF((PVR_DBG_WARNING, "%s: RGXDoStop failed (%s)",
 							__func__, PVRSRVGetErrorString(eError)));
+					psDevInfo->ui32ActivePMReqNonIdle++;
+					eError = PVRSRV_OK;
+				}
+			}
+			else if (g_pvrNoSync ||
+			         (pvr_state_wait &&
+			          (psFwSysData->ePowState == RGXFWIF_POW_IDLE ||
+			           psFwSysData->ePowState == RGXFWIF_POW_FORCED_IDLE)))
+			{
+				pr_info("pvr-mtk: no-sync: pow state %u treated as OFF (bypass)\n",
+				        (unsigned)psFwSysData->ePowState);
+				/* S3 bypass teardown: mirror the normal POW_OFF path. */
+				RGXTimeCorrEnd(psDeviceNode, RGXTIMECORR_EVENT_POWER);
+				_RGXUpdateGPUUtilStats(psDevInfo);
+				psDevInfo->bRGXPowered = IMG_FALSE;
+				eError = RGXDoStop(psDeviceNode);
+				if (eError != PVRSRV_OK)
+				{
+					pr_info("pvr-mtk: no-sync: RGXDoStop failed (%s), ignored\n",
+					        PVRSRVGetErrorString(eError));
 					psDevInfo->ui32ActivePMReqNonIdle++;
 					eError = PVRSRV_OK;
 				}
@@ -369,20 +599,29 @@ static INLINE void RGXCheckFWBootStage(PVRSRV_RGXDEV_INFO *psDevInfo)
 static INLINE PVRSRV_ERROR RGXDoStart(PVRSRV_DEVICE_NODE *psDeviceNode)
 {
 	PVRSRV_ERROR eError;
+	PVRSRV_RGXDEV_INFO *psDevInfo = psDeviceNode->pvDevice;
+	IMG_UINT32 ui32Idx;
 
-#if defined(SUPPORT_TRUSTED_DEVICE) && !defined(NO_HARDWARE) && !defined(SUPPORT_SECURITY_VALIDATION)
-	PVRSRV_DEVICE_CONFIG *psDevConfig = psDeviceNode->psDevConfig;
-
-	if (psDevConfig->pfnTDRGXStart == NULL)
+	/* S3: clear sampled IRQ counts before FW start to avoid stale
+	 * PrePowerState/health-check waits misjudging pending IRQs. */
+	for (ui32Idx = 0; ui32Idx < RGXFW_THREAD_NUM; ui32Idx++)
 	{
-		PVR_DPF((PVR_DBG_ERROR, "RGXPostPowerState: TDRGXStart not implemented!"));
-		return PVRSRV_ERROR_NOT_IMPLEMENTED;
+		psDevInfo->aui32SampleIRQCount[ui32Idx] = 0;
 	}
 
-	eError = psDevConfig->pfnTDRGXStart(psDevConfig->hSysData);
-#else
-	PVRSRV_RGXDEV_INFO *psDevInfo = psDeviceNode->pvDevice;
+#if defined(SUPPORT_TRUSTED_DEVICE) && !defined(NO_HARDWARE) && !defined(SUPPORT_SECURITY_VALIDATION)
+	{
+		PVRSRV_DEVICE_CONFIG *psDevConfig = psDeviceNode->psDevConfig;
 
+		if (psDevConfig->pfnTDRGXStart == NULL)
+		{
+			PVR_DPF((PVR_DBG_ERROR, "RGXPostPowerState: TDRGXStart not implemented!"));
+			return PVRSRV_ERROR_NOT_IMPLEMENTED;
+		}
+
+		eError = psDevConfig->pfnTDRGXStart(psDevConfig->hSysData);
+	}
+#else
 	eError = RGXStart(&psDevInfo->sLayerParams);
 #endif
 
@@ -394,6 +633,7 @@ static INLINE PVRSRV_ERROR RGXDoStart(PVRSRV_DEVICE_NODE *psDeviceNode)
 
 #if 0
 #include "rgxtbdefs.h"
+
 #else
 
 /*
@@ -595,6 +835,8 @@ static PVRSRV_ERROR RGXVirtualisationPowerupSidebandTest(PVRSRV_DEVICE_NODE	 *ps
 /*
 	RGXPostPowerState
 */
+extern void mtk_pvr_dump_spm(const char *tag);
+
 PVRSRV_ERROR RGXPostPowerState(IMG_HANDLE				hDevHandle,
                                PVRSRV_DEV_POWER_STATE	eNewPowerState,
                                PVRSRV_DEV_POWER_STATE	eCurrentPowerState,
@@ -615,24 +857,31 @@ PVRSRV_ERROR RGXPostPowerState(IMG_HANDLE				hDevHandle,
 
 		if (eCurrentPowerState == PVRSRV_DEV_POWER_STATE_OFF)
 		{
+			pr_info("pvr-mtk[S3FLOW]: PostPowerState ON enter\n");
 			/* Update timer correlation related data */
 			RGXTimeCorrBegin(psDeviceNode, RGXTIMECORR_EVENT_POWER);
 
 			/* Update GPU state counters */
 			_RGXUpdateGPUUtilStats(psDevInfo);
 
+			mtk_pvr_dump_spm("pre-start");
+			pvr_maybe_move_prim(psDevInfo);
+			pr_info("pvr-mtk[S3FLOW]: RGXDoStart begin\n");
 			eError = RGXDoStart(psDeviceNode);
+			pr_info("pvr-mtk[S3FLOW]: RGXDoStart ret=%d\n", eError);
 			if (eError != PVRSRV_OK)
 			{
 				PVR_DPF((PVR_DBG_ERROR, "RGXPostPowerState: RGXDoStart failed"));
 				return eError;
 			}
 
+			mtk_pvr_dump_spm("post-start");
 			OSMemoryBarrier();
 
 			/*
 			 * Check whether the FW has started by polling on bFirmwareStarted flag
 			 */
+			pr_info("pvr-mtk[S3FLOW]: poll FW started begin\n");
 			if (PVRSRVPollForValueKM(psDeviceNode,
 			                         (IMG_UINT32 __iomem *)&psDevInfo->psRGXFWIfSysInit->bFirmwareStarted,
 			                         IMG_TRUE,
@@ -1080,6 +1329,119 @@ _RGXActivePowerRequest_PowerLock_failed:
 
 #define RGX_FORCED_IDLE_RETRY_COUNT 10
 
+static int pvr_skip_fidle = 0;
+module_param(pvr_skip_fidle, int, 0644);
+MODULE_PARM_DESC(pvr_skip_fidle, "skip the forced-idle KCCB request (diagnostic)");
+
+static void pvr_pow_snap(PVRSRV_RGXDEV_INFO *psDevInfo, const char *tag,
+                         const RGXFWIF_KCCB_CMD *psCmd, IMG_UINT32 ui32Slot)
+{
+	RGXFWIF_SYSDATA *psSys = psDevInfo->psRGXFWIfFwSysData;
+	IMG_UINT32 ui32Sync = 0xDEADBEEF;
+
+	IMG_UINT32 ui32PaView = 0;
+
+	if (psDevInfo->psPowSyncPrim && psDevInfo->psPowSyncPrim->pui32LinAddr)
+		ui32Sync = *(volatile IMG_UINT32 *)psDevInfo->psPowSyncPrim->pui32LinAddr;
+
+	pr_info("pvr-mtk: POW[%s] sync=%u paview=%08x rtn=%08x fwaddr=%08x cpuva=%px kccb=%u/%u kcmds=%u slot=%u pow=%u hwr=%08x fwirq=%u faults=%u\n",
+		tag, ui32Sync, ui32PaView,
+		(psDevInfo->pui32KernelCCBRtnSlots != NULL) ? psDevInfo->pui32KernelCCBRtnSlots[ui32Slot] : 0xDEADBEEFu,
+		psDevInfo->psRGXFWIfFwOsData->sPowerSync.ui32Addr,
+		psDevInfo->psPowSyncPrim ? psDevInfo->psPowSyncPrim->pui32LinAddr : NULL,
+		psDevInfo->psKernelCCBCtl->ui32WriteOffset,
+		psDevInfo->psKernelCCBCtl->ui32ReadOffset,
+		psDevInfo->psRGXFWIfFwOsData->ui32KCCBCmdsExecuted,
+		ui32Slot,
+		psSys ? (unsigned)psSys->ePowState : 999U,
+		psSys ? psSys->ui32HWRStateFlags : 0U,
+		psSys ? psSys->aui32InterruptCount[0] : 0U,
+		psSys ? psSys->ui32FWFaults : 0U);
+
+	if (psCmd)
+		pr_info("pvr-mtk: POW[%s] ev=%08x irqen=%08x irqst=%08x mts=%08x\n",
+	        tag,
+	        OSReadHWReg32(psDevInfo->pvRegsBaseKM, 0x130),
+	        OSReadHWReg32(psDevInfo->pvRegsBaseKM, 0x8A0),
+	        OSReadHWReg32(psDevInfo->pvRegsBaseKM, 0x8A8),
+	        OSReadHWReg32(psDevInfo->pvRegsBaseKM, 0xB00));
+
+	pr_info("pvr-mtk: POW[%s] cmd=%08x powtype=%u req=%u raw=%08x\n",
+			tag, psCmd->eCmdType,
+			(unsigned)psCmd->uCmdData.sPowData.ePowType,
+			(unsigned)psCmd->uCmdData.sPowData.uPowerReqData.ePowRequestType,
+			psCmd->uCmdData.sPowData.uPowerReqData.ui32ActivePMLatencyms);
+}
+
+static int pvr_os_active = 0;
+module_param(pvr_os_active, int, 0644);
+MODULE_PARM_DESC(pvr_os_active, "set OS connection state ACTIVE before POW (diagnostic)");
+
+static int pvr_pow_off = 0;
+module_param(pvr_pow_off, int, 0644);
+MODULE_PARM_DESC(pvr_pow_off, "send POW_OFF_REQ instead of FORCED_IDLE_REQ (A/B)");
+
+
+static int pvr_prim_in_ccb = 0;
+module_param(pvr_prim_in_ccb, int, 0644);
+MODULE_PARM_DESC(pvr_prim_in_ccb, "place the POW sync prim inside the KCCB ctl page (diagnostic)");
+
+static void pvr_maybe_move_prim(PVRSRV_RGXDEV_INFO *psDevInfo)
+{
+	IMG_UINT32 ui32Fw;
+	if (pvr_fwtrace)
+	{
+		pr_info("pvr-mtk: ABI cmd=%u data=%u powreq=%u powoff=%u ccbctl=%u tb=%u\n",
+		        (unsigned)sizeof(RGXFWIF_KCCB_CMD),
+		        (unsigned)offsetof(RGXFWIF_KCCB_CMD, uCmdData),
+		        (unsigned)sizeof(RGXFWIF_POWER_REQUEST),
+		        (unsigned)offsetof(RGXFWIF_POWER_REQUEST, uPowerReqData),
+		        (unsigned)sizeof(RGXFWIF_CCB_CTL),
+		        (unsigned)sizeof(RGXFWIF_TRACEBUF));
+		if (psDevInfo->psRGXFWIfTraceBufCtl != NULL)
+		{
+			RGXFWIF_TRACEBUF *psTb = psDevInfo->psRGXFWIfTraceBufCtl;
+
+			pr_info("pvr-mtk: FWT boot logtype=%08x size=%u\n",
+			        psTb->ui32LogType, psTb->ui32TraceBufSizeInDWords);
+			if (psTb->ui32TraceBufSizeInDWords == 0)
+			{
+				PVRSRV_ERROR eTb = RGXTraceBufferInitOnDemandResources(psDevInfo,
+				                                                       RGX_FWSHAREDMEM_CPU_RO_ALLOCFLAGS);
+				pr_info("pvr-mtk: FWT alloc=%d size=%u fwaddr=%08x buf=%p\n",
+				        eTb, psTb->ui32TraceBufSizeInDWords,
+				        psTb->sTraceBuf[0].pui32RGXFWIfTraceBuffer.ui32Addr,
+				        (void *)psTb->sTraceBuf[0].pui32TraceBuffer);
+			}
+			psTb->ui32LogType = (RGXFWIF_LOG_TYPE_TRACE |
+			                     RGXFWIF_LOG_TYPE_GROUP_MAIN |
+			                     RGXFWIF_LOG_TYPE_GROUP_POW);
+			pr_info("pvr-mtk: FWT logtype now=%08x\n", psTb->ui32LogType);
+		}
+	}
+
+	if (pvr_no_apm && psDevInfo->psRGXFWIfFwSysData)
+	{
+		psDevInfo->psRGXFWIfFwSysData->ui32ConfigFlags &=
+			~(IMG_UINT32)RGXFWIF_INICFG_POW_RASCALDUST;
+		pr_info("pvr-mtk: APM off, syscfg=%08x\n",
+		        psDevInfo->psRGXFWIfFwSysData->ui32ConfigFlags);
+	}
+
+	if (!pvr_prim_in_ccb)
+		return;
+	if (!psDevInfo->psRGXFWIfOsInit || !psDevInfo->psKernelCCBCtl)
+		return;
+	ui32Fw = psDevInfo->psRGXFWIfOsInit->psKernelCCBCtl.ui32Addr + 0x100;
+	psDevInfo->psRGXFWIfFwOsData->sPowerSync.ui32Addr = ui32Fw;
+	psDevInfo->psPowSyncPrim->pui32LinAddr =
+		(volatile IMG_UINT32 __iomem *)((IMG_UINT8 *)psDevInfo->psKernelCCBCtl + 0x100);
+	pr_info("pvr-mtk: prim->ccb page (early) fw=%08x va=%px\n",
+	        ui32Fw, psDevInfo->psPowSyncPrim->pui32LinAddr);
+}
+
+extern int g_pvrNoSync;
+
 PVRSRV_ERROR RGXForcedIdleRequest(IMG_HANDLE hDevHandle, IMG_BOOL bDeviceOffPermitted)
 {
 	PVRSRV_DEVICE_NODE    *psDeviceNode = hDevHandle;
@@ -1093,11 +1455,120 @@ PVRSRV_ERROR RGXForcedIdleRequest(IMG_HANDLE hDevHandle, IMG_BOOL bDeviceOffPerm
 #endif
 	PVRSRV_VZ_RET_IF_MODE(GUEST, PVRSRV_OK);
 
+	if (pvr_os_active) {
+		psDevInfo->psRGXFWIfConnectionCtl->eConnectionOsState = RGXFW_CONNECTION_OS_ACTIVE;
+		pr_info("pvr-mtk: OS state forced to ACTIVE\n");
+	}
+
+	if (pvr_skip_fidle) {
+		pr_info("pvr-mtk: skip-fidle conn fw=%u os=%u fwtok=%08x ostok=%08x mts=%08x kccb w=%u r=%u pow=%u\n",
+		        (unsigned)psDevInfo->psRGXFWIfConnectionCtl->eConnectionFwState,
+		        (unsigned)psDevInfo->psRGXFWIfConnectionCtl->eConnectionOsState,
+		        psDevInfo->psRGXFWIfConnectionCtl->ui32AliveFwToken,
+		        psDevInfo->psRGXFWIfConnectionCtl->ui32AliveOsToken,
+		        OSReadHWReg32(psDevInfo->pvRegsBaseKM, 0xB00),
+		        psDevInfo->psKernelCCBCtl->ui32WriteOffset,
+		        psDevInfo->psKernelCCBCtl->ui32ReadOffset,
+		        psDevInfo->psRGXFWIfFwSysData ? (unsigned)psDevInfo->psRGXFWIfFwSysData->ePowState : 999U);
+
+		{
+			unsigned long long pa1 = 0, pa2 = 0, pa3 = 0;
+			const char *k1 = "vm", *k2 = "vm", *k3 = "vm";
+			if (psDevInfo->psKernelCCBCtl &&
+			    !is_vmalloc_addr(psDevInfo->psKernelCCBCtl)) {
+				pa1 = virt_to_phys((void *)psDevInfo->psKernelCCBCtl); k1 = "lin";
+			}
+			if (psDevInfo->psPowSyncPrim && psDevInfo->psPowSyncPrim->pui32LinAddr &&
+			    !is_vmalloc_addr((void *)psDevInfo->psPowSyncPrim->pui32LinAddr)) {
+				pa2 = virt_to_phys((void *)psDevInfo->psPowSyncPrim->pui32LinAddr); k2 = "lin";
+			}
+			if (psDevInfo->psRGXFWIfFwSysData &&
+			    !is_vmalloc_addr(psDevInfo->psRGXFWIfFwSysData)) {
+				pa3 = virt_to_phys((void *)psDevInfo->psRGXFWIfFwSysData); k3 = "lin";
+			}
+			pr_info("pvr-mtk: PHY kccbctl(%s)=0x%llx prim(%s)=0x%llx sysdata(%s)=0x%llx\n",
+			        k1, pa1, k2, pa2, k3, pa3);
+		}
+		{
+			IMG_DEV_PHYADDR sPtAddr;
+			if (MMU_AcquireBaseAddr(psDevInfo->psKernelMMUCtx, &sPtAddr) == PVRSRV_OK)
+			{
+				void *pvPt = memremap(sPtAddr.uiAddr, 0x10000, MEMREMAP_WB);
+				pr_info("pvr-mtk: PT base pa=0x%llx map=%p\n",
+				        (unsigned long long)sPtAddr.uiAddr, pvPt);
+				if (pvPt)
+				{
+					unsigned int k;
+					unsigned int *pui32 = (unsigned int *)pvPt;
+					for (k = 0x10; k < 0x30; k++)
+					{
+						unsigned int e = pui32[k];
+						pr_info("pvr-mtk: PTE[%03x] va=%08x raw=%08x v=%u pa=0x%llx cache=%u\n",
+						        k, 0xC0000000u + (k << 12), e, (e >> 1) & 1u,
+						        (unsigned long long)(((unsigned long long)(e & 0x03FFFFC0u)) << 6),
+						        (e >> 3) & 7u);
+					}
+				{
+					unsigned long long ullPrimPa = 0ULL, ullCtlPa = 0ULL;
+					struct page *psPg;
+
+					if (psDevInfo->psPowSyncPrim && psDevInfo->psPowSyncPrim->pui32LinAddr)
+					{
+						psPg = vmalloc_to_page((void *)psDevInfo->psPowSyncPrim->pui32LinAddr);
+						if (psPg)
+							ullPrimPa = page_to_phys(psPg) +
+							            offset_in_page((void *)psDevInfo->psPowSyncPrim->pui32LinAddr);
+					}
+					if (psDevInfo->psKernelCCBCtl)
+					{
+						psPg = vmalloc_to_page(psDevInfo->psKernelCCBCtl);
+						if (psPg)
+							ullCtlPa = page_to_phys(psPg) +
+							           offset_in_page(psDevInfo->psKernelCCBCtl);
+					}
+					pr_info("pvr-mtk: HOST prim pa=0x%llx ctl pa=0x%llx (PTE says prim=0x42c7c000 ctl=0x42c7d880)\n",
+					        ullPrimPa, ullCtlPa);
+				}
+					memunmap(pvPt);
+				}
+			}
+			else
+			{
+				pr_info("pvr-mtk: MMU_AcquireBaseAddr failed\n");
+			}
+		}
+		pr_info("pvr-mtk: RT cfg=%08x pm=%u clk=%u dusts=%u syscfg=%08x syscfgx=%08x\n",
+		        psDevInfo->psRGXFWIfRuntimeCfg->ui32RuntimeCfgFlags,
+		        psDevInfo->psRGXFWIfRuntimeCfg->ui32ActivePMLatencyms,
+		        psDevInfo->psRGXFWIfRuntimeCfg->ui32CoreClockSpeed,
+		        psDevInfo->psRGXFWIfRuntimeCfg->ui32DefaultDustsNumInit,
+		        psDevInfo->psRGXFWIfFwSysData ? psDevInfo->psRGXFWIfFwSysData->ui32ConfigFlags : 0U,
+		        psDevInfo->psRGXFWIfFwSysData ? psDevInfo->psRGXFWIfFwSysData->ui32ConfigFlagsExt : 0U);
+		pr_info("pvr-mtk: OSINIT osdata=%08x rtn=%08x fwccbctl=%08x fwccb=%08x\n",
+		        psDevInfo->psRGXFWIfOsInit->sFwOsData.ui32Addr,
+		        psDevInfo->psRGXFWIfOsInit->psKernelCCBRtnSlots.ui32Addr,
+		        psDevInfo->psRGXFWIfOsInit->psFirmwareCCBCtl.ui32Addr,
+		        psDevInfo->psRGXFWIfOsInit->psFirmwareCCB.ui32Addr);
+		pr_info("pvr-mtk: OSINIT kccbctl=%08x kccb=%08x cmdsize=%u wrapmask=%u\n",
+		        psDevInfo->psRGXFWIfOsInit->psKernelCCBCtl.ui32Addr,
+		        psDevInfo->psRGXFWIfOsInit->psKernelCCB.ui32Addr,
+		        psDevInfo->psKernelCCBCtl->ui32CmdSize,
+		        psDevInfo->psKernelCCBCtl->ui32WrapMask);
+		pr_info("pvr-mtk: prim fwaddr=%08x cpuva=%px\n",
+		        psDevInfo->psRGXFWIfFwOsData->sPowerSync.ui32Addr,
+		        psDevInfo->psPowSyncPrim->pui32LinAddr);
+		return PVRSRV_OK;
+	}
+
 #if !defined(NO_HARDWARE)
 	psFwSysData = psDevInfo->psRGXFWIfFwSysData;
+	pr_info("pvr-mtk: forced-idle enter: pow=%u kccb w=%u r=%u\n",
+	        (unsigned)psFwSysData->ePowState,
+	        psDevInfo->psKernelCCBCtl->ui32WriteOffset,
+	        psDevInfo->psKernelCCBCtl->ui32ReadOffset);
 
 	/* Firmware already forced idle */
-	if (psFwSysData->ePowState == RGXFWIF_POW_FORCED_IDLE)
+	if (!pvr_pow_off && psFwSysData->ePowState == RGXFWIF_POW_FORCED_IDLE)
 	{
 		return PVRSRV_OK;
 	}
@@ -1109,6 +1580,19 @@ PVRSRV_ERROR RGXForcedIdleRequest(IMG_HANDLE hDevHandle, IMG_BOOL bDeviceOffPerm
 	}
 #endif
 
+	pvr_pow_snap(psDevInfo, "before", &sPowCmd, 0);
+	if (pvr_fwstate)
+		pvr_dump_fwstate(psDevInfo);
+	if (pvr_prim_in_ccb)
+	{
+		IMG_UINT32 ui32Fw = psDevInfo->psRGXFWIfOsInit->psKernelCCBCtl.ui32Addr + 0x100;
+		psDevInfo->psRGXFWIfFwOsData->sPowerSync.ui32Addr = ui32Fw;
+		psDevInfo->psPowSyncPrim->pui32LinAddr =
+			(volatile IMG_UINT32 __iomem *)((IMG_UINT8 *)psDevInfo->psKernelCCBCtl + 0x100);
+		pr_info("pvr-mtk: prim->ccb page fw=%08x va=%px\n",
+		        ui32Fw, psDevInfo->psPowSyncPrim->pui32LinAddr);
+	}
+
 	eError = SyncPrimSet(psDevInfo->psPowSyncPrim, 0);
 	if (eError != PVRSRV_OK)
 	{
@@ -1119,6 +1603,19 @@ PVRSRV_ERROR RGXForcedIdleRequest(IMG_HANDLE hDevHandle, IMG_BOOL bDeviceOffPerm
 	sPowCmd.eCmdType = RGXFWIF_KCCB_CMD_POW;
 	sPowCmd.uCmdData.sPowData.ePowType = RGXFWIF_POW_FORCED_IDLE_REQ;
 	sPowCmd.uCmdData.sPowData.uPowerReqData.ePowRequestType = RGXFWIF_POWER_FORCE_IDLE;
+	if (pvr_pow_off)
+	{
+		sPowCmd.uCmdData.sPowData.ePowType = RGXFWIF_POW_OFF_REQ;
+		sPowCmd.uCmdData.sPowData.uPowerReqData.bForced = IMG_TRUE;
+		pr_info("pvr-mtk: POW_OFF_REQ instead of FORCED_IDLE (A/B)\n");
+	}
+	if (pvr_fwtrace)
+	{
+		IMG_UINT32 *pui32Raw = (IMG_UINT32 *)&sPowCmd;
+		pr_info("pvr-mtk: POW raw %08x %08x %08x %08x (w=%u)\n",
+		        pui32Raw[0], pui32Raw[1], pui32Raw[2], pui32Raw[3],
+		        psDevInfo->psKernelCCBCtl->ui32WriteOffset);
+	}
 
 	PDUMPCOMMENT("RGXForcedIdleRequest: Sending forced idle command");
 
@@ -1134,11 +1631,51 @@ PVRSRV_ERROR RGXForcedIdleRequest(IMG_HANDLE hDevHandle, IMG_BOOL bDeviceOffPerm
 		return eError;
 	}
 
+	pvr_pow_snap(psDevInfo, "sent", &sPowCmd, ui32CmdKCCBSlot);
+
+	if (pvr_kick)
+	{
+		IMG_UINT32 i;
+
+		for (i = 0; i < 40; i++)
+		{
+			IMG_UINT32 ui32Rb;
+
+			OSWriteMemoryBarrier();
+			OSWriteHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_MTS_SCHEDULE,
+			               (RGXFWIF_DM_GP & ~RGX_CR_MTS_SCHEDULE_DM_CLRMSK) |
+			               RGX_CR_MTS_SCHEDULE_TASK_NON_COUNTED);
+			OSMemoryBarrier();
+			ui32Rb = OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_MTS_SCHEDULE);
+
+			if ((i % 5) == 0)
+			{
+				pr_info("pvr-mtk: KICK %u rb=%08x kccb=%u/%u kcmds=%u pow=%u\n",
+				        i, ui32Rb,
+				        psDevInfo->psKernelCCBCtl->ui32WriteOffset,
+				        psDevInfo->psKernelCCBCtl->ui32ReadOffset,
+				        psDevInfo->psRGXFWIfFwOsData->ui32KCCBCmdsExecuted,
+				        (unsigned)psDevInfo->psRGXFWIfFwSysData->ePowState);
+			}
+			msleep(50);
+		}
+	}
+
 	/* Wait for GPU to finish current workload */
 	do {
 		eError = RGXPollForGPCommandCompletion(psDeviceNode,
 		                              psDevInfo->psPowSyncPrim->pui32LinAddr,
 									  0x1, 0xFFFFFFFF);
+		pvr_pow_snap(psDevInfo, "poll", &sPowCmd, ui32CmdKCCBSlot);
+		if (eError != PVRSRV_OK && pvr_state_wait)
+		{
+			unsigned int st = (unsigned int)psFwSysData->ePowState;
+			if (st == RGXFWIF_POW_IDLE || st == RGXFWIF_POW_FORCED_IDLE)
+			{
+				pr_info("pvr-mtk: state-wait: forced idle reached pow=%u (early)\n", st);
+				eError = PVRSRV_OK;
+			}
+		}
 		if ((eError == PVRSRV_OK) || (ui32RetryCount == RGX_FORCED_IDLE_RETRY_COUNT))
 		{
 			break;
@@ -1149,8 +1686,27 @@ PVRSRV_ERROR RGXForcedIdleRequest(IMG_HANDLE hDevHandle, IMG_BOOL bDeviceOffPerm
 				 __func__, ui32RetryCount, RGX_FORCED_IDLE_RETRY_COUNT));
 	} while (IMG_TRUE);
 
+	if (pvr_fwtrace)
+	{
+		pvr_dump_fw_trace(psDevInfo, "after-pow");
+	}
+
+	if (eError != PVRSRV_OK && pvr_state_wait && psFwSysData != NULL)
+	{
+		unsigned int st = (unsigned int)psFwSysData->ePowState;
+		if (st == RGXFWIF_POW_IDLE || st == RGXFWIF_POW_FORCED_IDLE)
+		{
+			pr_info("pvr-mtk: state-wait: forced idle reached pow=%u\n", st);
+			eError = PVRSRV_OK;
+		}
+	}
+
 	if (eError != PVRSRV_OK)
 	{
+		pr_info("pvr-mtk: forced-idle timeout: kccb w=%u r=%u\n",
+		        psDevInfo->psKernelCCBCtl->ui32WriteOffset,
+		        psDevInfo->psKernelCCBCtl->ui32ReadOffset);
+		pvr_pow_snap(psDevInfo, "timeout", &sPowCmd, ui32CmdKCCBSlot);
 		RGXFWNotifyHostTimeout(psDevInfo);
 		PVR_DPF((PVR_DBG_ERROR,
 				 "%s: Idle request failed. Firmware potentially left in forced idle state",
@@ -1170,7 +1726,10 @@ PVRSRV_ERROR RGXForcedIdleRequest(IMG_HANDLE hDevHandle, IMG_BOOL bDeviceOffPerm
 
 #if !defined(NO_HARDWARE)
 	/* Check the firmware state for idleness */
-	if (psFwSysData->ePowState != RGXFWIF_POW_FORCED_IDLE)
+	if (!g_pvrNoSync && !pvr_pow_off &&
+	    !(pvr_state_wait && (psFwSysData->ePowState == RGXFWIF_POW_IDLE ||
+	                          psFwSysData->ePowState == RGXFWIF_POW_FORCED_IDLE)) &&
+	    psFwSysData->ePowState != RGXFWIF_POW_FORCED_IDLE)
 	{
 		return PVRSRV_ERROR_DEVICE_IDLE_REQUEST_DENIED;
 	}

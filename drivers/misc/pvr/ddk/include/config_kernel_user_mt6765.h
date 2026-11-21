@@ -120,7 +120,7 @@
 #define PVR_LINUX_PHYSMEM_MAX_POOL_PAGES 25000
 #define PVR_LINUX_PHYSMEM_MAX_EXCESS_POOL_PAGES 20480
 #define PVR_LINUX_PHYSMEM_ZERO_ALL_PAGES
-/* #define PVR_LINUX_PHYSMEM_SUPPRESS_DMA_AC (disabled: osmem must use dma_alloc_coherent/CMA lowmem) */
+/* #define PVR_LINUX_PHYSMEM_SUPPRESS_DMA_AC (disabled: need uncached coherent pages for host<->FW comms) */
 /* #define PVR_LINUX_PHYSMEM_USE_HIGHMEM_ONLY (disabled: osmem must use dma_alloc_coherent/CMA lowmem) */
 #define PVR_DIRTY_BYTES_FLUSH_THRESHOLD 324288
 #define PVR_LINUX_HIGHORDER_ALLOCATION_THRESHOLD 2048
@@ -153,7 +153,7 @@
 #define PVRSRV_RGX_LOG2_CLIENT_CCB_MAX_SIZE_TDM 17
 #define ANDROID
 /* #define SUPPORT_ION */
-#define SUPPORT_MIPS_CONTIGUOUS_FW_MEMORY
+// #define SUPPORT_MIPS_CONTIGUOUS_FW_MEMORY
 #define PVR_ANDROID_ION_HEADER "../drivers/staging/android/aosp_ion/ion.h"
 #define PVR_ANDROID_ION_PRIV_HEADER "../drivers/staging/android/ion/ion_priv.h"
 #define PVR_ANDROID_ION_USE_SG_LENGTH

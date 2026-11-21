@@ -4322,6 +4322,9 @@ static void RGXPrepareExtraDebugInfo(IMG_CHAR *pszBuffer, IMG_UINT32 ui32BufferS
 	OSStringLCat(pszBuffer, RGXFWT_DEBUG_INFO_STR_APPEND, ui32BufferSize);
 }
 
+/* PVR-MTK diagnostic: limit FW trace decode to the last N DWords (0 = full) */
+IMG_UINT32 g_pvrFwTraceLimit = 0;
+
 void RGXDumpFirmwareTrace(DUMPDEBUG_PRINTF_FUNC *pfnDumpDebugPrintf,
 				void *pvDumpDebugFile,
 				PVRSRV_RGXDEV_INFO  *psDevInfo)
@@ -4344,6 +4347,12 @@ void RGXDumpFirmwareTrace(DUMPDEBUG_PRINTF_FUNC *pfnDumpDebugPrintf,
 	{
 		IMG_UINT32  tid;
 		IMG_UINT32  ui32TraceBufSizeInDWords = psRGXFWIfTraceBufCtl->ui32TraceBufSizeInDWords;
+		IMG_UINT32  ui32CountLimit = ui32TraceBufSizeInDWords;
+
+		if (g_pvrFwTraceLimit != 0 && ui32CountLimit > g_pvrFwTraceLimit)
+		{
+			ui32CountLimit = g_pvrFwTraceLimit;
+		}
 
 		/* Print the log type settings... */
 		if (psRGXFWIfTraceBufCtl->ui32LogType & RGXFWIF_LOG_TYPE_GROUP_MASK)
@@ -4371,7 +4380,7 @@ void RGXDumpFirmwareTrace(DUMPDEBUG_PRINTF_FUNC *pfnDumpDebugPrintf,
 				continue;
 			}
 
-			while (ui32Count < ui32TraceBufSizeInDWords)
+			while (ui32Count < ui32CountLimit)
 			{
 				IMG_UINT32  ui32Data, ui32DataToId;
 
@@ -4391,7 +4400,7 @@ void RGXDumpFirmwareTrace(DUMPDEBUG_PRINTF_FUNC *pfnDumpDebugPrintf,
 					ui32TracePtr = (ui32TracePtr + 1) % ui32TraceBufSizeInDWords;
 					ui32Count++;
 				} while ((RGXFW_SF_LAST == ui32DataToId  ||  ui32DataToId >= RGXFW_SF_FIRST)  &&
-				         ui32Count < ui32TraceBufSizeInDWords);
+				         ui32Count < ui32CountLimit);
 
 				if (ui32Count < ui32TraceBufSizeInDWords)
 				{

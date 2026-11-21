@@ -128,8 +128,9 @@ static int ft8006s_prepare(struct drm_panel *panel)
 	if (ctx->enable_gpio)
 		gpiod_set_value_cansleep(ctx->enable_gpio, 1);
 
+	/* reset is active-low: 1 = asserted (line low), 0 = released */
 	if (ctx->reset_gpio)
-		gpiod_set_value_cansleep(ctx->reset_gpio, 0);
+		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
 	msleep(5);
 
 	if (ctx->biasp_gpio)
@@ -140,7 +141,7 @@ static int ft8006s_prepare(struct drm_panel *panel)
 	msleep(9);
 
 	if (ctx->reset_gpio)
-		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+		gpiod_set_value_cansleep(ctx->reset_gpio, 0);
 	msleep(35);
 
 	ret = ft8006s_init_sequence(ctx);
@@ -185,8 +186,9 @@ static int ft8006s_unprepare(struct drm_panel *panel)
 
 	mipi_dsi_dcs_enter_sleep_mode(ctx->dsi);
 
+	/* hold the panel in reset (active-low: 1 = asserted) */
 	if (ctx->reset_gpio)
-		gpiod_set_value_cansleep(ctx->reset_gpio, 0);
+		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
 
 	if (ctx->biasn_gpio)
 		gpiod_set_value_cansleep(ctx->biasn_gpio, 0);
@@ -255,8 +257,12 @@ static int ft8006s_probe(struct mipi_dsi_device *dsi)
 		return dev_err_probe(dev, PTR_ERR(ctx->biasn_gpio), "biasn gpio\n");
 
 	ctx->backlight_gpio = devm_gpiod_get_optional(dev, "backlight", GPIOD_OUT_LOW);
-	if (IS_ERR(ctx->backlight_gpio))
-		return dev_err_probe(dev, PTR_ERR(ctx->backlight_gpio), "backlight gpio\n");
+	if (IS_ERR(ctx->backlight_gpio)) {
+		/* may be owned by pwm-backlight through the same enable gpio */
+		dev_info(dev, "backlight gpio unavailable (%ld), ignored\n",
+			 PTR_ERR(ctx->backlight_gpio));
+		ctx->backlight_gpio = NULL;
+	}
 
 	dsi->lanes = 4;
 	dsi->format = MIPI_DSI_FMT_RGB888;
