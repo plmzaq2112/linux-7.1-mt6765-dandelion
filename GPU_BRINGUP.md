@@ -8,4 +8,4 @@ support. See:
 - `gpu-bringup/docs/TIMELINE.md` — experiment log
 - `drivers/misc/pvr/ddk/` — the ported vendor DDK 1.13 sources
 
-Branch: `dandelion-gpu-7.1`.
+Branch: `dandelion-7.1`.

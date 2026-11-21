@@ -98,7 +98,7 @@ This is a **diagnostic workaround**, not an upstream-quality fix.
 ## 7. This repository
 
 This repository **is** the kernel source: mainline **7.1** for MT6765 / Redmi 9A,
-branch **`dandelion-gpu-7.1`**. It is based on `evilMyQueen/linux-mt6765`.
+branch **`dandelion-7.1`**. It is based on `evilMyQueen/linux-mt6765`.
 
 GPU bring-up material lives in **`gpu-bringup/`**; the actual driver changes are in
 `drivers/misc/pvr/ddk/` (plus one panel driver fix).

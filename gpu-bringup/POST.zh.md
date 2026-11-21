@@ -39,8 +39,8 @@ insmod pvrsrvkm.ko pvr_apm=2 pvr_os_active=1 pvr_no_sync=1 pvr_pow_off=1
 2. 会不会是 MTK 的 RascalDust APM 路径（`INICFG_POW_RASCALDUST`）卡住了完成分支？
 3. 原厂 4.19 驱动是否还有别的“主机可见完成信号”是我没发现的？
 
-内核源码 + 说明 + 补丁（同一个仓库，分支 `dandelion-gpu-7.1`）：
-**https://github.com/plmzaq2112/linux-7.1-mt6765-dandelion/tree/dandelion-gpu-7.1**
+内核源码 + 说明 + 补丁（同一个仓库，分支 `dandelion-7.1`）：
+**https://github.com/plmzaq2112/linux-7.1-mt6765-dandelion/tree/dandelion-7.1**
 （说明文档在仓库内的 `gpu-bringup/README.md`）
 
 全部是实验性内容，绕过逻辑会跳过驱动要求的固件握手，风险自负。

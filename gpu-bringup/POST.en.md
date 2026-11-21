@@ -41,8 +41,8 @@ insmod pvrsrvkm.ko pvr_apm=2 pvr_os_active=1 pvr_no_sync=1 pvr_pow_off=1
 2. Could the MTK "RascalDust" APM path (`INICFG_POW_RASCALDUST`) stall the completion branch?
 3. Is there any other host-visible completion the stock 4.19 driver could be relying on?
 
-Kernel source + docs + patches (single repository, branch `dandelion-gpu-7.1`):
-**https://github.com/plmzaq2112/linux-7.1-mt6765-dandelion/tree/dandelion-gpu-7.1**
+Kernel source + docs + patches (single repository, branch `dandelion-7.1`):
+**https://github.com/plmzaq2112/linux-7.1-mt6765-dandelion/tree/dandelion-7.1**
 (the write-up is in `gpu-bringup/README.md` inside the tree)
 
 Everything is experimental; the workarounds bypass firmware handshakes the driver expects.
