@@ -1,5 +1,7 @@
 # [Help] PowerVR GE8320 on mainline Linux 7.1 — firmware never acks POW, render node opens but I'm stuck
 
+> *Note: this thread will later be turned into the official kernel release thread for this device.*
+
 Device: **Xiaomi Redmi 9A (dandelion, MT6762G, PowerVR GE8320, BVNC 22.87.104.18)**
 Kernel: mainline **7.1.0** (arm64) + vendor PowerVR DDK **1.13 (ED5776728)**, Alpine userland.
 
