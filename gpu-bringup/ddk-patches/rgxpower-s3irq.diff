@@ -1,0 +1,237 @@
+--- rgxpower.c.bak_s3irq	2026-11-21 15:08:49.272671423 +0800
++++ rgxpower.c	2026-11-21 16:48:46.861965189 +0800
+@@ -81,6 +81,10 @@
+ module_param(pvr_no_apm, int, 0644);
+ MODULE_PARM_DESC(pvr_no_apm, "clear RGXFWIF_INICFG_POW_RASCALDUST before FW boots");
+ 
++static int pvr_state_wait = 1;
++module_param(pvr_state_wait, int, 0644);
++MODULE_PARM_DESC(pvr_state_wait, "accept ePowState transitions as completion (FW does not ack the prim)");
++
+ static int pvr_kick = 0;
+ module_param(pvr_kick, int, 0644);
+ MODULE_PARM_DESC(pvr_kick, "repeatedly kick MTS_SCHEDULE after POW and log readback");
+@@ -297,6 +301,8 @@
+ {
+ 	PVRSRV_ERROR eError;
+ 
++	pr_info("pvr-mtk[S3FLOW]: RGXDoStop enter\n");
++
+ #if defined(SUPPORT_TRUSTED_DEVICE) && !defined(NO_HARDWARE) && !defined(SUPPORT_SECURITY_VALIDATION)
+ 	PVRSRV_DEVICE_CONFIG *psDevConfig = psDeviceNode->psDevConfig;
+ 	PVRSRV_VZ_RET_IF_MODE(GUEST, PVRSRV_OK);
+@@ -313,6 +319,7 @@
+ 	PVRSRV_VZ_RET_IF_MODE(GUEST, PVRSRV_OK);
+ 
+ 	eError = RGXStop(&psDevInfo->sLayerParams);
++	pr_info("pvr-mtk[S3FLOW]: RGXStop ret=%d\n", eError);
+ #endif
+ 
+ 	return eError;
+@@ -373,6 +380,17 @@
+ 								  psDevInfo->psPowSyncPrim->pui32LinAddr,
+ 								  0x1, 0xFFFFFFFF);
+ 
++		if (eError != PVRSRV_OK && pvr_state_wait)
++		{
++			unsigned int st = (unsigned int)psFwSysData->ePowState;
++			if (st == RGXFWIF_POW_OFF || st == RGXFWIF_POW_IDLE ||
++			    st == RGXFWIF_POW_FORCED_IDLE)
++			{
++				pr_info("pvr-mtk: state-wait: powoff accepted with pow=%u\n", st);
++				eError = PVRSRV_OK;
++			}
++		}
++
+ 		/* Check the Power state after the answer */
+ 		if (eError == PVRSRV_OK)
+ 		{
+@@ -390,6 +408,9 @@
+ 					IMG_UINT32 ui32IrqCnt;
+ 
+ 					get_irq_cnt_val(ui32IrqCnt, ui32idx, psDevInfo);
++					pr_info("pvr-mtk: IRQCNT idx=%u expect=%u host=%u\n",
++					        ui32idx, ui32IrqCnt,
++					        psDevInfo->aui32SampleIRQCount[ui32idx]);
+ 
+ 					/* Wait for the pending FW processor to host interrupts to come back. */
+ 					eError = PVRSRVPollForValueKM(psDeviceNode,
+@@ -408,6 +429,33 @@
+ 								ui32IrqCnt));
+ 
+ 						RGX_WaitForInterruptsTimeout(psDevInfo);
++						/* S3: the FW may update its IRQ counter after we acked the
++						 * level IRQ (no second IRQ is raised). Re-sample once and,
++						 * if it moved, align the host counter so the power
++						 * transition can complete. */
++						{
++							IMG_UINT32 ui32Now;
++
++							get_irq_cnt_val(ui32Now, ui32idx, psDevInfo);
++							pr_info("pvr-mtk: IRQCNT after-timeout idx=%u now=%u host=%u ev=%08x wst=%08x\n",
++							        ui32idx, ui32Now,
++							        psDevInfo->aui32SampleIRQCount[ui32idx],
++							        OSReadHWReg32(psDevInfo->pvRegsBaseKM, 0x130),
++							        OSReadHWReg32(psDevInfo->pvRegsBaseKM, RGX_CR_MIPS_WRAPPER_IRQ_STATUS));
++							if (psDevInfo->aui32SampleIRQCount[ui32idx] != ui32Now)
++							{
++								psDevInfo->aui32SampleIRQCount[ui32idx] = ui32Now;
++							}
++							/* The timeout handler above already resamples the
++							 * counter; if the counts now agree the pending IRQ
++							 * has been accounted for, so clear the stale error. */
++							if (psDevInfo->aui32SampleIRQCount[ui32idx] == ui32Now)
++							{
++								pr_info("pvr-mtk: IRQ counts aligned (host=%u), continue\n",
++								        ui32Now);
++								eError = PVRSRV_OK;
++							}
++						}
+ 					}
+ 				}
+ #endif /* NO_HARDWARE */
+@@ -439,10 +487,25 @@
+ 					eError = PVRSRV_OK;
+ 				}
+ 			}
+-			else if (g_pvrNoSync)
++			else if (g_pvrNoSync ||
++			         (pvr_state_wait &&
++			          (psFwSysData->ePowState == RGXFWIF_POW_IDLE ||
++			           psFwSysData->ePowState == RGXFWIF_POW_FORCED_IDLE)))
+ 			{
+ 				pr_info("pvr-mtk: no-sync: pow state %u treated as OFF (bypass)\n",
+ 				        (unsigned)psFwSysData->ePowState);
++				/* S3 bypass teardown: mirror the normal POW_OFF path. */
++				RGXTimeCorrEnd(psDeviceNode, RGXTIMECORR_EVENT_POWER);
++				_RGXUpdateGPUUtilStats(psDevInfo);
++				psDevInfo->bRGXPowered = IMG_FALSE;
++				eError = RGXDoStop(psDeviceNode);
++				if (eError != PVRSRV_OK)
++				{
++					pr_info("pvr-mtk: no-sync: RGXDoStop failed (%s), ignored\n",
++					        PVRSRVGetErrorString(eError));
++					psDevInfo->ui32ActivePMReqNonIdle++;
++					eError = PVRSRV_OK;
++				}
+ 			}
+ 			else
+ 			{
+@@ -536,20 +599,29 @@
+ static INLINE PVRSRV_ERROR RGXDoStart(PVRSRV_DEVICE_NODE *psDeviceNode)
+ {
+ 	PVRSRV_ERROR eError;
++	PVRSRV_RGXDEV_INFO *psDevInfo = psDeviceNode->pvDevice;
++	IMG_UINT32 ui32Idx;
+ 
+-#if defined(SUPPORT_TRUSTED_DEVICE) && !defined(NO_HARDWARE) && !defined(SUPPORT_SECURITY_VALIDATION)
+-	PVRSRV_DEVICE_CONFIG *psDevConfig = psDeviceNode->psDevConfig;
+-
+-	if (psDevConfig->pfnTDRGXStart == NULL)
++	/* S3: clear sampled IRQ counts before FW start to avoid stale
++	 * PrePowerState/health-check waits misjudging pending IRQs. */
++	for (ui32Idx = 0; ui32Idx < RGXFW_THREAD_NUM; ui32Idx++)
+ 	{
+-		PVR_DPF((PVR_DBG_ERROR, "RGXPostPowerState: TDRGXStart not implemented!"));
+-		return PVRSRV_ERROR_NOT_IMPLEMENTED;
++		psDevInfo->aui32SampleIRQCount[ui32Idx] = 0;
+ 	}
+ 
+-	eError = psDevConfig->pfnTDRGXStart(psDevConfig->hSysData);
+-#else
+-	PVRSRV_RGXDEV_INFO *psDevInfo = psDeviceNode->pvDevice;
++#if defined(SUPPORT_TRUSTED_DEVICE) && !defined(NO_HARDWARE) && !defined(SUPPORT_SECURITY_VALIDATION)
++	{
++		PVRSRV_DEVICE_CONFIG *psDevConfig = psDeviceNode->psDevConfig;
+ 
++		if (psDevConfig->pfnTDRGXStart == NULL)
++		{
++			PVR_DPF((PVR_DBG_ERROR, "RGXPostPowerState: TDRGXStart not implemented!"));
++			return PVRSRV_ERROR_NOT_IMPLEMENTED;
++		}
++
++		eError = psDevConfig->pfnTDRGXStart(psDevConfig->hSysData);
++	}
++#else
+ 	eError = RGXStart(&psDevInfo->sLayerParams);
+ #endif
+ 
+@@ -785,6 +857,7 @@
+ 
+ 		if (eCurrentPowerState == PVRSRV_DEV_POWER_STATE_OFF)
+ 		{
++			pr_info("pvr-mtk[S3FLOW]: PostPowerState ON enter\n");
+ 			/* Update timer correlation related data */
+ 			RGXTimeCorrBegin(psDeviceNode, RGXTIMECORR_EVENT_POWER);
+ 
+@@ -793,7 +866,9 @@
+ 
+ 			mtk_pvr_dump_spm("pre-start");
+ 			pvr_maybe_move_prim(psDevInfo);
++			pr_info("pvr-mtk[S3FLOW]: RGXDoStart begin\n");
+ 			eError = RGXDoStart(psDeviceNode);
++			pr_info("pvr-mtk[S3FLOW]: RGXDoStart ret=%d\n", eError);
+ 			if (eError != PVRSRV_OK)
+ 			{
+ 				PVR_DPF((PVR_DBG_ERROR, "RGXPostPowerState: RGXDoStart failed"));
+@@ -806,6 +881,7 @@
+ 			/*
+ 			 * Check whether the FW has started by polling on bFirmwareStarted flag
+ 			 */
++			pr_info("pvr-mtk[S3FLOW]: poll FW started begin\n");
+ 			if (PVRSRVPollForValueKM(psDeviceNode,
+ 			                         (IMG_UINT32 __iomem *)&psDevInfo->psRGXFWIfSysInit->bFirmwareStarted,
+ 			                         IMG_TRUE,
+@@ -1305,6 +1381,7 @@
+ module_param(pvr_pow_off, int, 0644);
+ MODULE_PARM_DESC(pvr_pow_off, "send POW_OFF_REQ instead of FORCED_IDLE_REQ (A/B)");
+ 
++
+ static int pvr_prim_in_ccb = 0;
+ module_param(pvr_prim_in_ccb, int, 0644);
+ MODULE_PARM_DESC(pvr_prim_in_ccb, "place the POW sync prim inside the KCCB ctl page (diagnostic)");
+@@ -1590,6 +1667,15 @@
+ 		                              psDevInfo->psPowSyncPrim->pui32LinAddr,
+ 									  0x1, 0xFFFFFFFF);
+ 		pvr_pow_snap(psDevInfo, "poll", &sPowCmd, ui32CmdKCCBSlot);
++		if (eError != PVRSRV_OK && pvr_state_wait)
++		{
++			unsigned int st = (unsigned int)psFwSysData->ePowState;
++			if (st == RGXFWIF_POW_IDLE || st == RGXFWIF_POW_FORCED_IDLE)
++			{
++				pr_info("pvr-mtk: state-wait: forced idle reached pow=%u (early)\n", st);
++				eError = PVRSRV_OK;
++			}
++		}
+ 		if ((eError == PVRSRV_OK) || (ui32RetryCount == RGX_FORCED_IDLE_RETRY_COUNT))
+ 		{
+ 			break;
+@@ -1605,6 +1691,16 @@
+ 		pvr_dump_fw_trace(psDevInfo, "after-pow");
+ 	}
+ 
++	if (eError != PVRSRV_OK && pvr_state_wait && psFwSysData != NULL)
++	{
++		unsigned int st = (unsigned int)psFwSysData->ePowState;
++		if (st == RGXFWIF_POW_IDLE || st == RGXFWIF_POW_FORCED_IDLE)
++		{
++			pr_info("pvr-mtk: state-wait: forced idle reached pow=%u\n", st);
++			eError = PVRSRV_OK;
++		}
++	}
++
+ 	if (eError != PVRSRV_OK)
+ 	{
+ 		pr_info("pvr-mtk: forced-idle timeout: kccb w=%u r=%u\n",
+@@ -1630,7 +1726,10 @@
+ 
+ #if !defined(NO_HARDWARE)
+ 	/* Check the firmware state for idleness */
+-	if (!g_pvrNoSync && !pvr_pow_off && psFwSysData->ePowState != RGXFWIF_POW_FORCED_IDLE)
++	if (!g_pvrNoSync && !pvr_pow_off &&
++	    !(pvr_state_wait && (psFwSysData->ePowState == RGXFWIF_POW_IDLE ||
++	                          psFwSysData->ePowState == RGXFWIF_POW_FORCED_IDLE)) &&
++	    psFwSysData->ePowState != RGXFWIF_POW_FORCED_IDLE)
+ 	{
+ 		return PVRSRV_ERROR_DEVICE_IDLE_REQUEST_DENIED;
+ 	}

@@ -1,0 +1,9 @@
+ drivers/misc/pvr/ddk/Makefile                      |   1 +
+ .../pvr/ddk/hwdefs/rogue/km/rgx_bvnc_table_km.h    |   2 +-
+ .../pvr/ddk/include/config_kernel_user_mt6765.h    |   4 +-
+ .../ddk/services/server/devices/rogue/rgxdebug.c   |  13 +-
+ .../ddk/services/server/devices/rogue/rgxfwutils.c |  10 +
+ .../ddk/services/server/devices/rogue/rgxinit.c    |  59 ++-
+ .../ddk/services/server/devices/rogue/rgxpower.c   | 542 ++++++++++++++++++++-
+ .../system/rogue/rgx_mtk/pvr_platform_mt6765.c     |  77 ++-
+ 8 files changed, 673 insertions(+), 35 deletions(-)

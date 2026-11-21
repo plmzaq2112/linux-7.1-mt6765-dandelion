@@ -1,0 +1,25 @@
+# Sanitized excerpt of a successful open (module: pvr-t20-open-ok.ko)
+
+# insmod pvrsrvkm.ko pvr_apm=2 pvr_os_active=1 pvr_no_sync=1 pvr_pow_off=1
+
+[   47.855715] pvr-mtk[S3FLOW]: PostPowerState ON enter
+[   47.858062] pvr-mtk[S3FLOW]: RGXDoStart begin
+[   47.860687] pvr-mtk[S3FLOW]: RGXDoStart ret=0
+[   47.862923] pvr-mtk[S3FLOW]: poll FW started begin
+[   72.879622] pvr-mtk: IRQCNT idx=0 expect=1 host=0
+[   77.880373] PVR_K:(2) :3149 PollForValueKM: Timeout. Expected 0x1 but found 0x0 (mask 0xffffffff).
+[   77.881580] PVR_K:(2) :409 RGXPrePowerState: Wait for pending interrupts failed.Thread 0 Host: 0, FW: 1
+[   77.884075] pvr-mtk: IRQCNT after-timeout idx=0 now=1 host=1 ev=00000000 wst=00000000
+[   77.885121] pvr-mtk: IRQ counts aligned (host=1), continue
+[   77.885852] pvr-mtk[S3FLOW]: RGXDoStop enter
+[   77.886449] pvr-mtk[S3FLOW]: RGXStop ret=0
+
+# verification (no read, to avoid blocking on drm_read):
+#   timeout 5 sh -c 'exec 3<>/dev/dri/renderD129; echo OPEN_OK'
+#   -> OPEN_OK
+
+# For reference, the POW snapshots from the same run:
+#   POW[sent] sync=0 rtn=00000000 fwaddr=c0019000 kccb=1/0 kcmds=0 slot=0 pow=1
+#   POW[poll] sync=0 rtn=00000000 kccb=1/0 kcmds=0 slot=0 pow=3
+#   POW[poll] sync=0 rtn=00000000 kccb=1/1 kcmds=1 slot=0 pow=2
+#   POW[timeout] sync=0 rtn=00000000 kccb=1/1 kcmds=1 slot=0 pow=2
