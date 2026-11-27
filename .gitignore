@@ -15,3 +15,6 @@ modules.order
 Thumbs.db
 __pycache__/
 *.pyc
+
+/boot/initramfs/images/
+/boot/initramfs/assets/apex.wav

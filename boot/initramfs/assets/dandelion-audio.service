@@ -1,0 +1,11 @@
+[Unit]
+Description=Dandelion audio mixer routing (stopgap until UCM2)
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/dandelion-audio-mixer.sh
+
+[Install]
+WantedBy=multi-user.target

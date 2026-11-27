@@ -1,0 +1,1 @@
+# TODO: extract AVB/vbmeta config from build-boot scripts
