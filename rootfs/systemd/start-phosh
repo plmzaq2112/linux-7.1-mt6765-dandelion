@@ -1,0 +1,4 @@
+#!/bin/sh
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+export WLR_RENDERER_ALLOW_SOFTWARE=1
+exec /usr/bin/phosh-session > "$HOME/phosh.log" 2>&1

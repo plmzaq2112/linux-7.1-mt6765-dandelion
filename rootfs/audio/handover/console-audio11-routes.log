@@ -1,0 +1,539 @@
+[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x410fd034]
+[    0.000000] Linux version 7.1.0-mt6765+ (a12bbb@a12bbb) (aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, GNU ld (GNU Binutils for Ubuntu) 2.46) #28 SMP PREEMPT Sun Nov 22 12:04:46 CST 2026
+[    0.000000] KASLR disabled due to lack of seed
+[    0.000000] Machine model: MT6762G
+[    0.000000] earlycon: mtk8250 at MMIO32 0x0000000011002000 (options '')
+[    0.000000] printk: legacy bootconsole [mtk8250] enabled
+[    0.000000] printk: debug: ignoring loglevel setting.
+[    0.000000] [Firmware Bug]: Kernel image misaligned at boot, please fix your bootloader!
+[    0.000000] Reserved memory: created CMA memory pool at 0x000000007cc00000, size 32 MiB
+[    0.000000] OF: reserved mem: initialized node linux,cma, compatible id shared-dma-pool
+[    0.000000] OF: reserved mem: 0x000000007cc00000..0x000000007ebfffff (32768 KiB) map reusable linux,cma
+[    0.000000] OF: reserved mem: 0x000000007c000000..0x000000007c3fffff (4096 KiB) map non-reusable mblock-20-ap_md_c_smem
+[    0.000000] OF: reserved mem: 0x0000000078000000..0x000000007816ffff (1472 KiB) map non-reusable mblock-19-ap_md_nc_smem
+[    0.000000] OF: reserved mem: 0x000000008e000000..0x000000009dffffff (262144 KiB) map non-reusable mblock-18-md_mem_usage
+[    0.000000] OF: reserved mem: 0x000000009fff0000..0x000000009fffffff (64 KiB) map non-reusable mblock-17-ccci_tag_mem
+[    0.000000] OF: reserved mem: 0x000000009f900000..0x000000009fefffff (6144 KiB) nomap non-reusable mblock-16-SCP-reserved
+[    0.000000] OF: reserved mem: 0x0000000077ff0000..0x0000000077ffffff (64 KiB) nomap non-reusable mblock-15-SPM-reserved
+[    0.000000] OF: reserved mem: 0x000000007ec50000..0x000000007fbfffff (16064 KiB) nomap non-reusable mblock-14-framebuffer
+[    0.000000] OF: reserved mem: 0x0000000047d70000..0x0000000047d7ffff (64 KiB) nomap non-reusable mblock-13-minirdump
+[    0.000000] OF: reserved mem: 0x0000000047c90000..0x0000000047d6ffff (896 KiB) nomap non-reusable mblock-12-pstore
+[    0.000000] OF: reserved mem: 0x0000000047c80000..0x0000000047c8ffff (64 KiB) nomap non-reusable mblock-11-ram_console
+[    0.000000] OF: reserved mem: 0x00000000bfc00000..0x00000000bfc1ffff (128 KiB) nomap non-reusable mblock-10-tee-log-reserved
+[    0.000000] OF: reserved mem: 0x0000000070000000..0x00000000729fffff (43008 KiB) nomap non-reusable mblock-9-teei-reserved
+[    0.000000] OF: reserved mem: 0x000000007ff00000..0x000000007ffbffff (768 KiB) nomap non-reusable mblock-8-SSPM-reserved
+[    0.000000] OF: reserved mem: 0x000000007fc00000..0x000000007fdfffff (2048 KiB) nomap non-reusable mblock-7-tee-secmem
+[    0.000000] OF: reserved mem: 0x00000000bfe00000..0x00000000bfe3ffff (256 KiB) nomap non-reusable mblock-6-atf-log-reserved
+[    0.000000] OF: reserved mem: 0x00000000bff70000..0x00000000bffeffff (512 KiB) nomap non-reusable mblock-5-atf-ramdump-reserved
+[    0.000000] OF: reserved mem: 0x0000000047d80000..0x0000000047dcffff (320 KiB) nomap non-reusable mblock-4-atf-reserved
+[    0.000000] OF: reserved mem: 0x000000007ffc0000..0x000000007fffffff (256 KiB) map non-reusable mblock-3-log_store
+[    0.000000] OF: reserved mem: 0x000000013ffff000..0x000000013fffffff (4 KiB) nomap non-reusable mblock-2-dramc-rk1
+[    0.000000] OF: reserved mem: 0x00000000bffff000..0x00000000bfffffff (4 KiB) nomap non-reusable mblock-1-dramc-rk0
+[    0.000000] NUMA: Faking a node at [mem 0x0000000040000000-0x000000013fffffff]
+[    0.000000] NODE_DATA(0) allocated [mem 0x13f793780-0x13f79687f]
+[    0.000000] psci: probing for conduit method from DT.
+[    0.000000] psci: PSCIv1.0 detected in firmware.
+[    0.000000] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] psci: MIGRATE_INFO_TYPE not supported.
+[    0.000000] psci: SMC Calling Convention v1.0
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000040000000-0x00000000ffffffff]
+[    0.000000]   DMA32    empty
+[    0.000000]   Normal   [mem 0x0000000100000000-0x000000013fffffff]
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000040000000-0x0000000047c7ffff]
+[    0.000000]   node   0: [mem 0x0000000047c80000-0x0000000047dcffff]
+[    0.000000]   node   0: [mem 0x0000000047dd0000-0x000000006fffffff]
+[    0.000000]   node   0: [mem 0x0000000070000000-0x00000000729fffff]
+[    0.000000]   node   0: [mem 0x0000000072a00000-0x0000000077feffff]
+[    0.000000]   node   0: [mem 0x0000000077ff0000-0x0000000077ffffff]
+[    0.000000]   node   0: [mem 0x0000000078000000-0x000000007ec4ffff]
+[    0.000000]   node   0: [mem 0x000000007ec50000-0x000000007fdfffff]
+[    0.000000]   node   0: [mem 0x000000007fe00000-0x000000007fefffff]
+[    0.000000]   node   0: [mem 0x000000007ff00000-0x000000007ffbffff]
+[    0.000000]   node   0: [mem 0x000000007ffc0000-0x000000009f8fffff]
+[    0.000000]   node   0: [mem 0x000000009f900000-0x000000009fefffff]
+[    0.000000]   node   0: [mem 0x000000009ff00000-0x00000000bfbfffff]
+[    0.000000]   node   0: [mem 0x00000000bfc00000-0x00000000bfc1ffff]
+[    0.000000]   node   0: [mem 0x00000000bfc20000-0x00000000bfdfffff]
+[    0.000000]   node   0: [mem 0x00000000bfe00000-0x00000000bfe3ffff]
+[    0.000000]   node   0: [mem 0x00000000bfe40000-0x00000000bff6ffff]
+[    0.000000]   node   0: [mem 0x00000000bff70000-0x00000000bffeffff]
+[    0.000000]   node   0: [mem 0x00000000bfff0000-0x00000000bfffefff]
+[    0.000000]   node   0: [mem 0x00000000bffff000-0x00000000bfffffff]
+[    0.000000]   node   0: [mem 0x00000000c0000000-0x000000013fffefff]
+[    0.000000]   node   0: [mem 0x000000013ffff000-0x000000013fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000040000000-0x000000013fffffff]
+[    0.000000] percpu: Embedded 496 pages/cpu s1994456 r8192 d28968 u2031616
+[    0.000000] pcpu-alloc: s1994456 r8192 d28968 u2031616 alloc=496*4096
+[    0.000000] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+[    0.000000] Detected VIPT I-cache on CPU0
+[    0.000000] CPU features: detected: GICv3 CPU interface
+[    0.000000] CPU features: kernel page table isolation forced OFF by kpti command line option
+[    0.000000] CPU features: detected: ARM erratum 845719
+[    0.000000] alternatives: applying boot alternatives
+[    0.000000] Kernel command line: earlycon=mtk8250,0x11002000 console=ttyS0,921600n1 console=tty0                clk_ignore_unused regulator_ignore_unused pd_ignore_unused PMOS_NOSPLASH ramoops.mem_address=0x47c90000 ramoops.mem_size=0xe0000 ramoops.pmsg_size=0x10000 ramoops.console_size=0x40000 has_battery_removed=0 androidboot.boot_devices=bootdevice,soc/11230000.mmc,11230000.mmc ramoops.mem_address=0x47c90000 ramoops.mem_size=0xe0000 ramoops.pmsg_size=0x10000 ramoops.console_size=0x40000 androidboot.mode=normal  androidboot.chipid=0xdc79d4e3c93fb0a3d5453f72ff7d7575  androidboot.cpuid=0xdc79d4e3c93fb0a3d5453f72ff7d75754d9514f7 bootopt=64S3,32N2,64N2 kpti=off ignore_loglevel log_buf_len=4M fbcon=font:TER16x32 console=tty0 panic=0 ramoops.mem_address=0x47c90000 ramoops.mem_size=0xe0000 ramoops.console_size=0x40000 ramoops.pmsg_size=0x10000 systemd.mask=dandelion-early-shell.service root=/dev/ram  androidboot.verifiedbootstate=orange androidboot.opt_sim_count=2 androidboot.product.hardware.sku=dsds \
+[    0.000000] Kernel command line: androidro.vendor.mtk_data_config=1 androidboot.ddrsize=4 androidboot.atm=disabled androidboot.meta_log_disable=0 mtk_printk_ctrl.disable_uart=1 androidboot.serialno=HU8DROH6BMHIEE99 androidboot.hwname=dandelion  androidboot.hwlevel=0 androidboot.hwc=CN2PA  androidboot.hwversion=1.50.0 androidboot.lockdown=3231323142050502 androidboot.read_bc_buf=0x4 androidboot.secureboot=1 androidboot.mic.num=1 androidboot.product.hw.sku=std androidboot.bootreason=lk_crash gpt=1 usb2jtag_mode=0 androidboot.dtb_idx=0 androidboot.dtbo_idx=0
+[    0.000000] Unknown kernel command line parameters "PMOS_NOSPLASH has_battery_removed=0 bootopt=64S3,32N2,64N2 usb2jtag_mode=0", will be passed to user space.
+[    0.000000] printk: log buffer data + meta data: 4194304 + 14680064 = 18874368 bytes
+[    0.000000] printk: early log buf free: 254520(97%)
+[    0.000000] Dentry cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.000000] software IO TLB: area num 8.
+[    0.000000] software IO TLB: mapped [mem 0x00000000fbfff000-0x00000000fffff000] (64MB)
+[    0.000000] Fallback order for Node 0: 0 
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 1048576
+[    0.000000] Policy zone: Normal
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    0.000000] Running RCU self tests
+[    0.000000] Running RCU synchronous self tests
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU lockdep checking is enabled.
+[    0.000000] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+[    0.000000] Running RCU synchronous self tests
+[    0.000000] RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] GICv3: GIC: Using split EOI/Deactivate mode
+[    0.000000] GICv3: 640 SPIs implemented
+[    0.000000] GICv3: 0 Extended SPIs implemented
+[    0.000000] Root IRQ handler: gic_handle_irq
+[    0.000000] GICv3: GICv3 features: 16 PPIs
+[    0.000000] GICv3: GICD_CTLR.DS=0, SCR_EL3.FIQ=1
+[    0.000000] GICv3: CPU0: found redistributor 0 region 0:0x000000000c100000
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+[    0.000000] 
+[    0.000000] =============================
+[    0.000000] [ BUG: Invalid wait context ]
+[    0.000000] 7.1.0-mt6765+ #28 Not tainted
+[    0.000000] -----------------------------
+[    0.000000] swapper/0/0 is trying to lock:
+[    0.000000] ffff800081c456c8 (clocksource_mutex){....}-{4:4}, at: __clocksource_register_scale+0x18c/0x254
+[    0.000000] other info that might help us debug this:
+[    0.000000] context-{5:5}
+[    0.000000] 1 lock held by swapper/0/0:
+[    0.000000]  #0: ffff80008297beb8 (&tkd->lock){....}-{2:2}, at: timekeeping_init+0x138/0x21c
+[    0.000000] stack backtrace:
+[    0.000000] CPU: 0 UID: 0 PID: 0 Comm: swapper/0 Not tainted 7.1.0-mt6765+ #28 PREEMPTLAZY 
+[    0.000000] Hardware name: MT6762G (DT)
+[    0.000000] Call trace:
+[    0.000000]  show_stack+0x14/0x1c (C)
+[    0.000000]  dump_stack_lvl+0x78/0xa8
+[    0.000000]  dump_stack+0x14/0x1c
+[    0.000000]  __lock_acquire+0x43c/0x11c0
+[    0.000000]  lock_acquire+0x188/0x2c0
+[    0.000000]  __mutex_lock+0xd8/0x508
+[    0.000000]  mutex_lock_nested+0x20/0x28
+[    0.000000]  __clocksource_register_scale+0x18c/0x254
+[    0.000000]  clocksource_default_clock+0x30/0x48
+[    0.000000]  timekeeping_init+0x144/0x21c
+[    0.000000]  start_kernel+0x760/0x944
+[    0.000000]  __primary_switched+0x88/0x90
+[    0.000000] arch_timer: cp15 timer running at 13.00MHz (phys).
+[    0.000000] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x2ff89eacb, max_idle_ns: 440795202429 ns
+[    0.000000] sched_clock: 56 bits at 13MHz, resolution 76ns, wraps every 4398046511101ns
+[    0.002465] Console: colour dummy device 80x25
+[    0.003078] printk: legacy console [tty0] enabled
+[    0.003753] printk: legacy bootconsole [mtk8250] disabled
+[    0.004527] Lock dependency validator: Copyright (c) 2006 Red Hat, Inc., Ingo Molnar
+[    0.004561] ... MAX_LOCKDEP_SUBCLASSES:  8
+[    0.004586] ... MAX_LOCK_DEPTH:          48
+[    0.004610] ... MAX_LOCKDEP_KEYS:        8192
+[    0.004635] ... CLASSHASH_SIZE:          4096
+[    0.004659] ... MAX_LOCKDEP_ENTRIES:     32768
+[    0.004684] ... MAX_LOCKDEP_CHAINS:      65536
+[    0.004708] ... CHAINHASH_SIZE:          32768
+[    0.004744]  memory used by lock dependency info: 6941 kB
+[    0.004772]  memory used for stack traces: 4224 kB
+[    0.004798]  per task-struct memory footprint: 2688 bytes
+[    0.005684] Calibrating delay loop (skipped), value calculated using timer frequency.. 26.00 BogoMIPS (lpj=13000)
+[    0.005738] pid_max: default: 32768 minimum: 301
+[    0.009961] Mount-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.010012] Mountpoint-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.011462] VFS: Finished mounting rootfs on nullfs
+[    0.015703] Running RCU synchronous self tests
+[    0.015748] Running RCU synchronous self tests
+[    0.021045] rcu: Hierarchical SRCU implementation.
+[    0.021101] rcu: 	Max phase no-delay instances is 400.
+[    0.021658] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.023528] smp: Bringing up secondary CPUs ...
+[    0.025311] Detected VIPT I-cache on CPU1
+[    0.025594] GICv3: CPU1: found redistributor 1 region 0:0x000000000c120000
+[    0.025648] CPU1: Booted secondary processor 0x0000000001 [0x410fd034]
+[    0.027685] Detected VIPT I-cache on CPU2
+[    0.027934] GICv3: CPU2: found redistributor 2 region 0:0x000000000c140000
+[    0.027977] CPU2: Booted secondary processor 0x0000000002 [0x410fd034]
+[    0.029948] Detected VIPT I-cache on CPU3
+[    0.030201] GICv3: CPU3: found redistributor 3 region 0:0x000000000c160000
+[    0.030244] CPU3: Booted secondary processor 0x0000000003 [0x410fd034]
+[    0.032546] Detected VIPT I-cache on CPU4
+[    0.032941] GICv3: CPU4: found redistributor 100 region 0:0x000000000c180000
+[    0.033002] CPU4: Booted secondary processor 0x0000000100 [0x410fd034]
+[    0.035103] Detected VIPT I-cache on CPU5
+[    0.035423] GICv3: CPU5: found redistributor 101 region 0:0x000000000c1a0000
+[    0.035462] CPU5: Booted secondary processor 0x0000000101 [0x410fd034]
+[    0.037655] Detected VIPT I-cache on CPU6
+[    0.037980] GICv3: CPU6: found redistributor 102 region 0:0x000000000c1c0000
+[    0.038019] CPU6: Booted secondary processor 0x0000000102 [0x410fd034]
+[    0.040071] Detected VIPT I-cache on CPU7
+[    0.040400] GICv3: CPU7: found redistributor 103 region 0:0x000000000c1e0000
+[    0.040440] CPU7: Booted secondary processor 0x0000000103 [0x410fd034]
+[    0.040787] smp: Brought up 1 node, 8 CPUs
+[    0.041277] SMP: Total of 8 processors activated.
+[    0.041305] CPU: All CPU(s) started at EL2
+[    0.041330] CPU features: detected: 32-bit EL0 Support
+[    0.041360] CPU features: detected: CRC32 instructions
+[    0.041394] CPU features: detected: PMUv3
+[    0.041549] alternatives: applying system-wide alternatives
+[    0.041913] CPU features: emulated: Privileged Access Never (PAN) using TTBR0_EL1 switching
+[    0.044396] Memory: 3590016K/4194304K available (15296K kernel code, 3272K rwdata, 8256K rodata, 3520K init, 11883K bss, 562980K reserved, 32768K cma-reserved)
+[    0.047911] devtmpfs: initialized
+[    0.092314] Running RCU synchronous self tests
+[    0.092433] Running RCU synchronous self tests
+[    0.092802] Running RCU Tasks wait API self tests
+[    0.093115] Running RCU Tasks Trace wait API self tests
+[    0.094151] posixtimers hash table entries: 4096 (order: 7, 327680 bytes, linear)
+[    0.094665] futex hash table entries: 2048 (262144 bytes on 1 NUMA nodes, total 256 KiB, linear).
+[    0.095467] 22160 pages in range for non-PLT usage
+[    0.095487] 513680 pages in range for PLT usage
+[    0.098264] regulator-dummy: 2147483647 mW budget, enabled
+[    0.101541] Callback from call_rcu_tasks_trace() invoked.
+[    0.104437] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.108343] DMA: preallocated 512 KiB GFP_KERNEL pool for atomic allocations
+[    0.108656] DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.109066] audit: initializing netlink subsys (disabled)
+[    0.109505] audit: type=2000 audit(0.104:1): state=initialized audit_enabled=0 res=1
+[    0.109594] ramoops: using module parameters
+[    0.112959] pstore: Using crash dump compression: deflate
+[    0.113005] printk: legacy console [ramoops-1] enabled
+[    0.114880] pstore: Registered ramoops as persistent store backend
+[    0.114920] ramoops: using 0xe0000@0x47c90000, ecc: 0
+[    0.116910] thermal_sys: Registered thermal governor 'step_wise'
+[    0.116925] thermal_sys: Registered thermal governor 'user_space'
+[    0.116980] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.117119] cpuidle: using governor ladder
+[    0.117235] cpuidle: using governor menu
+[    0.117638] NET: Registered PF_QIPCRTR protocol family
+[    0.119089] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.119566] ASID allocator initialised with 65536 entries
+[    0.121281] Serial: AMBA PL011 UART driver
+[    0.139205] /soc/interrupt-controller@0c000000: Fixed dependency cycle(s) with /soc/interrupt-controller@0c000000
+[    0.142189] /soc/clock-controller@14000000: Fixed dependency cycle(s) with /soc/ovl@1400b000
+[    0.142743] /soc/ovl@1400b000: Fixed dependency cycle(s) with /soc/ovl@1400c000
+[    0.142830] /soc/ovl@1400b000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.143137] /soc/ovl@1400c000: Fixed dependency cycle(s) with /soc/dma-controller@1400d000
+[    0.143221] /soc/ovl@1400c000: Fixed dependency cycle(s) with /soc/ovl@1400b000
+[    0.143313] /soc/ovl@1400c000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.143637] /soc/dma-controller@1400d000: Fixed dependency cycle(s) with /soc/color@1400f000
+[    0.143762] /soc/dma-controller@1400d000: Fixed dependency cycle(s) with /soc/ovl@1400c000
+[    0.143866] /soc/dma-controller@1400d000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.144318] /soc/color@1400f000: Fixed dependency cycle(s) with /soc/ccorr@14010000
+[    0.144463] /soc/color@1400f000: Fixed dependency cycle(s) with /soc/dma-controller@1400d000
+[    0.144574] /soc/color@1400f000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.144908] /soc/ccorr@14010000: Fixed dependency cycle(s) with /soc/aal@14011000
+[    0.145097] /soc/ccorr@14010000: Fixed dependency cycle(s) with /soc/color@1400f000
+[    0.145213] /soc/ccorr@14010000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.145503] /soc/aal@14011000: Fixed dependency cycle(s) with /soc/gamma@14012000
+[    0.145753] /soc/aal@14011000: Fixed dependency cycle(s) with /soc/ccorr@14010000
+[    0.145878] /soc/aal@14011000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.146124] /soc/gamma@14012000: Fixed dependency cycle(s) with /soc/dither@14013000
+[    0.146420] /soc/gamma@14012000: Fixed dependency cycle(s) with /soc/aal@14011000
+[    0.146551] /soc/gamma@14012000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.146750] /soc/dither@14013000: Fixed dependency cycle(s) with /soc/dsi@14014000
+[    0.147113] /soc/dither@14013000: Fixed dependency cycle(s) with /soc/gamma@14012000
+[    0.147253] /soc/dither@14013000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.147361] /soc/dsi@14014000: Fixed dependency cycle(s) with /soc/dsi@14014000/panel@0
+[    0.147815] /soc/dsi@14014000: Fixed dependency cycle(s) with /soc/dither@14013000
+[    0.147976] /soc/dsi@14014000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.148537] /soc/dsi@14014000/panel@0: Fixed dependency cycle(s) with /soc/dsi@14014000
+[    0.150295] Trying to register duplicate clock ID: 0
+[    0.197916] Callback from call_rcu_tasks() invoked.
+[    0.200748] /soc/clock-controller@14000000: Fixed dependency cycle(s) with /soc/ovl@1400b000
+[    0.203760] /soc/clock-controller@14000000: Fixed dependency cycle(s) with /soc/ovl@1400b000
+[    0.203998] /soc/ovl@1400b000: Fixed dependency cycle(s) with /soc/ovl@1400c000
+[    0.204188] /soc/ovl@1400b000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.205023] /soc/ovl@1400b000: Fixed dependency cycle(s) with /soc/ovl@1400c000
+[    0.205261] /soc/ovl@1400c000: Fixed dependency cycle(s) with /soc/dma-controller@1400d000
+[    0.205344] /soc/ovl@1400c000: Fixed dependency cycle(s) with /soc/ovl@1400b000
+[    0.205643] /soc/ovl@1400c000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.206443] /soc/ovl@1400c000: Fixed dependency cycle(s) with /soc/dma-controller@1400d000
+[    0.206684] /soc/dma-controller@1400d000: Fixed dependency cycle(s) with /soc/color@1400f000
+[    0.206757] /soc/dma-controller@1400d000: Fixed dependency cycle(s) with /soc/ovl@1400c000
+[    0.207059] /soc/dma-controller@1400d000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.208660] /soc/dma-controller@1400d000: Fixed dependency cycle(s) with /soc/color@1400f000
+[    0.208900] /soc/color@1400f000: Fixed dependency cycle(s) with /soc/ccorr@14010000
+[    0.208977] /soc/color@1400f000: Fixed dependency cycle(s) with /soc/dma-controller@1400d000
+[    0.209282] /soc/color@1400f000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.210098] /soc/color@1400f000: Fixed dependency cycle(s) with /soc/ccorr@14010000
+[    0.210332] /soc/ccorr@14010000: Fixed dependency cycle(s) with /soc/aal@14011000
+[    0.210430] /soc/ccorr@14010000: Fixed dependency cycle(s) with /soc/color@1400f000
+[    0.210734] /soc/ccorr@14010000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.211529] /soc/ccorr@14010000: Fixed dependency cycle(s) with /soc/aal@14011000
+[    0.211773] /soc/aal@14011000: Fixed dependency cycle(s) with /soc/gamma@14012000
+[    0.211866] /soc/aal@14011000: Fixed dependency cycle(s) with /soc/ccorr@14010000
+[    0.212168] /soc/aal@14011000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.212954] /soc/aal@14011000: Fixed dependency cycle(s) with /soc/gamma@14012000
+[    0.213169] /soc/gamma@14012000: Fixed dependency cycle(s) with /soc/dither@14013000
+[    0.213271] /soc/gamma@14012000: Fixed dependency cycle(s) with /soc/aal@14011000
+[    0.213648] /soc/gamma@14012000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.214370] /soc/gamma@14012000: Fixed dependency cycle(s) with /soc/dither@14013000
+[    0.214583] /soc/dither@14013000: Fixed dependency cycle(s) with /soc/dsi@14014000
+[    0.214698] /soc/dither@14013000: Fixed dependency cycle(s) with /soc/gamma@14012000
+[    0.215051] /soc/dither@14013000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.215791] /soc/dither@14013000: Fixed dependency cycle(s) with /soc/dsi@14014000
+[    0.215969] /soc/dsi@14014000: Fixed dependency cycle(s) with /soc/dsi@14014000/panel@0
+[    0.216104] /soc/dsi@14014000: Fixed dependency cycle(s) with /soc/dither@14013000
+[    0.216594] /soc/dsi@14014000: Fixed dependency cycle(s) with /soc/clock-controller@14000000
+[    0.216876] /soc/dsi@14014000/panel@0: Fixed dependency cycle(s) with /soc/dsi@14014000
+[    0.238773] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.238849] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.238890] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.238929] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.238967] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.239006] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.239044] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.239082] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.255485] fbcon: Taking over console
+[    0.256647] iommu: Default domain type: Translated
+[    0.256689] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.257336] vusb33-reg: 3300 mV 2147483647 mW budget, enabled
+[    0.257692] reg-fixed-voltage ldo-vusb33: vusb33-reg supplying 3300000uV
+[    0.260621] SCSI subsystem initialized
+[    0.261114] libata version 3.00 loaded.
+[    0.261629] usbcore: registered new interface driver usbfs
+[    0.261749] usbcore: registered new interface driver hub
+[    0.261899] usbcore: registered new device driver usb
+[    0.263373] pps_core: LinuxPPS API ver. 1 registered
+[    0.263411] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.263483] PTP clock support registered
+[    0.264024] EDAC MC: Ver: 3.0.0
+[    0.264900] scmi_core: SCMI protocol bus registered
+[    0.269437] FPGA manager framework
+[    0.270276] Advanced Linux Sound Architecture Driver Initialized.
+[    0.272024] Bluetooth: Core ver 2.22
+[    0.272122] NET: Registered PF_BLUETOOTH protocol family
+[    0.272159] Bluetooth: HCI device and connection manager initialized
+[    0.272229] Bluetooth: HCI socket layer initialized
+[    0.272271] Bluetooth: L2CAP socket layer initialized
+[    0.272374] Bluetooth: SCO socket layer initialized
+[    0.272906] nfc: nfc_init: NFC Core ver 0.1
+[    0.273030] NET: Registered PF_NFC protocol family
+[    0.273454] vgaarb: loaded
+[    0.275281] clocksource: Switched to clocksource arch_sys_counter
+[    0.276696] VFS: Disk quotas dquot_6.6.0
+[    0.277034] VFS: Dquot-cache hash table entries: 512 (4096 bytes)
+[    0.302314] NET: Registered PF_INET protocol family
+[    0.302648] IP idents hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.307550] tcp_listen_portaddr_hash hash table entries: 2048 (order: 6, 163840 bytes, linear)
+[    0.307772] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.307862] TCP established hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.308202] TCP bind hash table entries: 32768 (order: 11, 5242880 bytes, vmalloc hugepage)
+[    0.313122] TCP: Hash tables configured (established 32768 bind 32768)
+[    0.313682] UDP hash table entries: 2048 (order: 8, 622592 bytes, linear)
+[    0.314743] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.316537] PCI: CLS 0 bytes, default 64
+[    0.316910] Unpacking initramfs...
+[    0.325920] Initialise system trusted keyrings
+[    0.326483] workingset: timestamp_bits=42 (anon: 38) max_order=20 bucket_order=0 (anon: 0)
+[    0.332957] fuse: init (API version 7.45)
+[    0.349702] Freeing initrd memory: 964K
+[    0.376893] NET: Registered PF_ALG protocol family
+[    0.377005] async_tx: api initialized (async)
+[    0.377043] Key type asymmetric registered
+[    0.377081] Asymmetric key parser 'x509' registered
+[    0.377542] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 241)
+[    0.377592] io scheduler mq-deadline registered
+[    0.377630] io scheduler kyber registered
+[    0.378010] xor: measuring software checksum speed
+[    0.380212]    neon            :  1517 MB/sec
+[    0.381253]    32regs          :  3275 MB/sec
+[    0.382182]    8regs           :  3738 MB/sec
+[    0.382215] xor: using function: 8regs (3738 MB/sec)
+[    0.385409] phy phy-11cc0000.t-phy.0: Looking up phy-supply from device node /soc/t-phy@11cc0000/usb-phy@11cc0800
+[    0.385500] phy phy-11cc0000.t-phy.0: Looking up phy-supply property in node /soc/t-phy@11cc0000/usb-phy@11cc0800 failed
+[    0.393635] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.395685] IPMI message handler: version 39.2
+[    0.395914] ipmi device interface
+[    0.396311] ipmi_si: IPMI System Interface driver
+[    0.397234] ipmi_si: Unable to find any System Interface(s)
+[    0.434519] mtk-socinfo mtk-socinfo.0.auto: error -ENOENT: Failed to get socinfo data
+[    0.434600] mtk-socinfo mtk-socinfo.0.auto: probe with driver mtk-socinfo failed with error -2
+[    0.434766] mtk-socinfo mtk-socinfo.1.auto: Unknown MediaTek SoC with ID 0x00080002 0x0000000e
+[    0.434816] mtk-socinfo mtk-socinfo.1.auto: error -ENOENT: Failed to get socinfo data
+[    0.434862] mtk-socinfo mtk-socinfo.1.auto: probe with driver mtk-socinfo failed with error -2
+[    0.456528] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    0.463388] printk: legacy console [ttyS0] disabled
+[    0.484434] 11002000.serial: ttyS0 at MMIO 0x11002000 (irq = 182, base_baud = 1625000) is a ST16650V2
+[    0.484570] printk: legacy console [ttyS0] enabled
+[    0.809497] [drm] Initialized vgem 1.0.0 for vgem on minor 0
+[    0.825942] mediatek-drm mediatek-drm.3.auto: Adding component match for /soc/ovl@1400b000
+[    0.827242] mediatek-drm mediatek-drm.3.auto: Adding component match for /soc/ovl@1400c000
+[    0.828493] mediatek-drm mediatek-drm.3.auto: Adding component match for /soc/dma-controller@1400d000
+[    0.829907] mediatek-drm mediatek-drm.3.auto: Adding component match for /soc/color@1400f000
+[    0.831171] mediatek-drm mediatek-drm.3.auto: Adding component match for /soc/ccorr@14010000
+[    0.832435] mediatek-drm mediatek-drm.3.auto: Adding component match for /soc/aal@14011000
+[    0.833680] mediatek-drm mediatek-drm.3.auto: Adding component match for /soc/gamma@14012000
+[    0.835306] mediatek-drm mediatek-drm.3.auto: Adding component match for /soc/dsi@14014000
+[    0.870013] loop: module loaded
+[    0.929769] vcore: 518 <--> 1312 mV at 800 mV 2147483647 mW budget, enabled
+[    0.931375] vmodem: 500 <--> 1193 mV at 800 mV 2147483647 mW budget, enabled
+[    0.932992] vpa: 500 <--> 3650 mV at 500 mV 2147483647 mW budget, disabled
+[    0.934553] megasas: 07.734.00.00-rc1
+[    0.934776] vproc: 518 <--> 1312 mV at 800 mV 2147483647 mW budget, enabled
+[    0.935319] mpt3sas version 54.100.00.00 loaded
+[    0.936952] vs1: 1200 <--> 2200 mV at 2100 mV 2147483647 mW budget, enabled
+[    0.938456] vaux18: 1800 mV 2147483647 mW budget, enabled
+[    0.939791] vaud28: 2800 mV 2147483647 mW budget, enabled
+[    0.941094] vcama: 2500 <--> 2800 mV at 2800 mV 2147483647 mW budget, disabled
+[    0.942666] vcamd: override min_uV, 100000 -> 1000000
+[    0.943394] vcamd: 1000 <--> 1800 mV at 1200 mV 2147483647 mW budget, disabled
+[    0.944907] vcamio: 1800 mV 2147483647 mW budget, disabled
+[    0.946158] vcn18: 1800 mV 2147483647 mW budget, disabled
+[    0.947455] vcn28: 2800 mV 2147483647 mW budget, disabled
+[    0.948792] vcn33-bt: 3300 <--> 3500 mV at 3500 mV 2147483647 mW budget, disabled
+[    0.950449] vcn33-wifi: 3300 <--> 3500 mV at 3500 mV 2147483647 mW budget, disabled
+[    0.956255] vdram: 1100 <--> 1200 mV at 1100 mV 2147483647 mW budget, enabled
+[    0.957859] vefuse: 1200 <--> 3300 mV at 1800 mV 2147483647 mW budget, disabled
+[    0.959557] vemc: 2900 <--> 3300 mV at 3000 mV 2147483647 mW budget, enabled
+[    0.960995] vfe28: 2800 mV 2147483647 mW budget, disabled
+[    0.962035] tun: Universal TUN/TAP device driver, 1.6
+[    0.962376] vibr: 1200 <--> 3300 mV at 2800 mV 2147483647 mW budget, disabled
+[    0.963345] PPP generic driver version 2.4.2
+[    0.964563] vio18: 1800 mV 2147483647 mW budget, enabled
+[    0.964631] PPP MPPE Compression module registered
+[    0.965830] vio28: 2800 mV 2147483647 mW budget, enabled
+[    0.965916] pegasus: Pegasus/Pegasus II USB Ethernet driver
+[    0.966455] vldo28: 2800 <--> 3000 mV at 2800 mV 2147483647 mW budget, disabled
+[    0.966795] usbcore: registered new interface driver pegasus
+[    0.968003] vmc: 1800 <--> 3300 mV at 3000 mV 2147483647 mW budget, disabled
+[    0.968449] usbcore: registered new interface driver rtl8150
+[    0.969642] vmch: 2900 <--> 3300 mV at 3000 mV 2147483647 mW budget, disabled
+[    0.970045] usbcore: registered new device driver r8152-cfgselector
+[    0.971238] vrf12: 1200 mV 2147483647 mW budget, disabled
+[    0.971815] usbcore: registered new interface driver r8152
+[    0.972970] vrf18: 1800 mV 2147483647 mW budget, disabled
+[    0.973315] usbcore: registered new interface driver lan78xx
+[    0.974453] vsim1: 1700 <--> 3100 mV at 1800 mV 2147483647 mW budget, disabled
+[    0.974720] usbcore: registered new interface driver asix
+[    0.975983] vsim2: 1700 <--> 3100 mV at 1800 mV 2147483647 mW budget, disabled
+[    0.976407] usbcore: registered new interface driver ax88179_178a
+[    0.977759] vsram-others: 518 <--> 1312 mV at 900 mV 2147483647 mW budget, enabled
+[    0.978101] usbcore: registered new interface driver cdc_ether
+[    0.979503] vsram-proc: 518 <--> 1312 mV at 900 mV 2147483647 mW budget, enabled
+[    0.979886] usbcore: registered new interface driver dm9601
+[    0.981096] vusb33: 3000 <--> 3100 mV at 3000 mV 2147483647 mW budget, enabled
+[    0.981572] usbcore: registered new interface driver CoreChips
+[    0.982742] vxo22: 2200 <--> 2400 mV at 2200 mV 2147483647 mW budget, enabled
+[    0.983249] usbcore: registered new interface driver smsc75xx
+[    0.985865] usbcore: registered new interface driver smsc95xx
+[    0.986774] usbcore: registered new interface driver net1080
+[    0.987654] usbcore: registered new interface driver plusb
+[    0.988538] usbcore: registered new interface driver cdc_subset
+[    0.989445] usbcore: registered new interface driver zaurus
+[    0.990311] usbcore: registered new interface driver MOSCHIP usb-ethernet driver
+[    0.991408] usbcore: registered new interface driver ipheth
+[    0.992252] usbcore: registered new interface driver cdc_ncm
+[    0.993169] usbcore: registered new interface driver r8153_ecm
+[    0.997894] usbcore: registered new interface driver cdc_acm
+[    0.998676] cdc_acm: USB Abstract Control Model driver for USB modems and ISDN adapters
+[    1.000190] usbcore: registered new interface driver uas
+[    1.001039] usbcore: registered new interface driver usb-storage
+[    1.002333] usbcore: registered new interface driver cp210x
+[    1.003114] usbserial: USB Serial support registered for cp210x
+[    1.003990] usbcore: registered new interface driver ftdi_sio
+[    1.004808] usbserial: USB Serial support registered for FTDI USB Serial Device
+[    1.005863] usbcore: registered new interface driver option
+[    1.006659] usbserial: USB Serial support registered for GSM modem (1-port)
+[    1.011726] usb_phy_generic usb_phy_generic.4.auto: dummy supplies not allowed for exclusive requests (id=vbus)
+[    1.014844] musb-hdrc musb-hdrc.5.auto: MUSB HDRC host driver
+[    1.015668] musb-hdrc musb-hdrc.5.auto: new USB bus registered, assigned bus number 1
+[    1.017237] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.01
+[    1.018358] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    1.019326] usb usb1: Product: MUSB HDRC host driver
+[    1.019988] usb usb1: Manufacturer: Linux 7.1.0-mt6765+ musb-hcd
+[    1.020802] usb usb1: SerialNumber: musb-hdrc.5.auto
+[    1.022800] hub 1-0:1.0: USB hub found
+[    1.023410] hub 1-0:1.0: 1 port detected
+[    1.031070] input: mt6779-keypad as /devices/platform/soc/10010000.keyboard/input/input0
+[    1.034845] input: mtk-pmic-keys as /devices/platform/soc/1000d000.pwrap/1000d000.pwrap:pmic/mt6357-keys/input/input1
+[    1.041170] mt6397-rtc mt6357-rtc: registered as rtc0
+[    1.042006] mt6397-rtc mt6357-rtc: setting system clock to 2086-11-21T04:10:05 UTC (3688690205)
+[    1.044117] i2c_dev: i2c /dev entries driver
+[    1.045693] i2c-mt65xx 11007000.i2c: Looking up vbus-supply from device node /soc/i2c@11007000
+[    1.046874] i2c-mt65xx 11007000.i2c: Looking up vbus-supply property in node /soc/i2c@11007000 failed
+[    1.049913] i2c-mt65xx 11008000.i2c: Looking up vbus-supply from device node /soc/i2c@11008000
+[    1.051103] i2c-mt65xx 11008000.i2c: Looking up vbus-supply property in node /soc/i2c@11008000 failed
+[    1.053957] i2c-mt65xx 11009000.i2c: Looking up vbus-supply from device node /soc/i2c@11009000
+[    1.055201] i2c-mt65xx 11009000.i2c: Looking up vbus-supply property in node /soc/i2c@11009000 failed
+[    1.059085] i2c i2c-2: Failed to register i2c client camera_main_backup at 0x20 (-16)
+[    1.060156] i2c i2c-2: of_i2c: Failure registering /soc/i2c@11009000/camera_main_backup@20
+[    1.061282] i2c i2c-2: Failed to create I2C device for /soc/i2c@11009000/camera_main_backup@20
+[    1.062461] i2c i2c-2: Failed to register i2c client camera_main_two_bac at 0x30 (-16)
+[    1.063520] i2c i2c-2: of_i2c: Failure registering /soc/i2c@11009000/camera_main_two_backup@30
+[    1.064677] i2c i2c-2: Failed to create I2C device for /soc/i2c@11009000/camera_main_two_backup@30
+[    1.067399] i2c-mt65xx 1100f000.i2c: Looking up vbus-supply from device node /soc/i2c@1100f000
+[    1.068609] i2c-mt65xx 1100f000.i2c: Looking up vbus-supply property in node /soc/i2c@1100f000 failed
+[    1.073853] i2c-mt65xx 11011000.i2c: Looking up vbus-supply from device node /soc/i2c@11011000
+[    1.075071] i2c-mt65xx 11011000.i2c: Looking up vbus-supply property in node /soc/i2c@11011000 failed
+[    1.078634] i2c i2c-4: Failed to register i2c client camera_sub_backup at 0x3f (-16)
+[    1.079694] i2c i2c-4: of_i2c: Failure registering /soc/i2c@11011000/camera_sub_backup@3f
+[    1.080798] i2c i2c-4: Failed to create I2C device for /soc/i2c@11011000/camera_sub_backup@3f
+[    1.082754] i2c-mt65xx 1100d000.i2c: Looking up vbus-supply from device node /soc/i2c@1100d000
+[    1.083945] i2c-mt65xx 1100d000.i2c: Looking up vbus-supply property in node /soc/i2c@1100d000 failed
+[    1.086169] i2c i2c-6: of_i2c: modalias failure on /soc/i2c@1100d000/tps65132_driver@3E
+[    1.087289] i2c i2c-6: Failed to create I2C device for /soc/i2c@1100d000/tps65132_driver@3E
+[    1.089885] i2c-mt65xx 11016000.i2c: Looking up vbus-supply from device node /soc/i2c@11016000
+[    1.091135] i2c-mt65xx 11016000.i2c: Looking up vbus-supply property in node /soc/i2c@11016000 failed
+[    1.095069] mt6370 5-0034: error -ENXIO: Failed to check vendor info
+[    1.097783] i2c i2c-5: Failed to register i2c client switching_charger at 0x6b (-16)
+[    1.098834] i2c i2c-5: of_i2c: Failure registering /soc/i2c@11016000/switching_charger@6b
+[    1.099935] i2c i2c-5: Failed to create I2C device for /soc/i2c@11016000/switching_charger@6b
+[    1.108551] bq256xx-charger 5-006b: battery info missing, default values will be applied
+[    1.116198] mtk-wdt 10007000.reset-controller: Watchdog enabled (timeout=31 sec, nowayout=0)
+[    1.119211] softdog: initialized. soft_noboot=0 soft_margin=60 sec soft_panic=0 (nowayout=0)
+[    1.120390] softdog:              soft_reboot_cmd=<not set> soft_active_on_boot=0
+[    1.122078] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[    1.124430] Bluetooth: HCI UART driver ver 2.3
+[    1.125038] Bluetooth: HCI UART protocol H4 registered
+[    1.125799] Bluetooth: HCI UART protocol LL registered
+[    1.126692] usbcore: registered new interface driver bfusb
+[    1.127566] usbcore: registered new interface driver btusb
+[    1.133136] mtk-msdc 11240000.mmc: Got CD GPIO
+[    1.133949] mtk-msdc 11230000.mmc: Looking up vmmc-supply from device node /soc/mmc@11230000
+[    1.133955] mtk-msdc 11240000.mmc: Looking up vmmc-supply from device node /soc/mmc@11240000
+[    1.134379] mtk-msdc 11230000.mmc: Looking up vqmmc-supply from device node /soc/mmc@11230000
+[    1.135457] mtk-msdc 11240000.mmc: Looking up vqmmc-supply from device node /soc/mmc@11240000
+[    1.136477] mtk-msdc 11230000.mmc: Looking up vqmmc2-supply from device node /soc/mmc@11230000
+[    1.137608] mtk-msdc 11240000.mmc: Looking up vqmmc2-supply from device node /soc/mmc@11240000
+[    1.138408] mtk-msdc 11230000.mmc: Looking up vqmmc2-supply property in node /soc/mmc@11230000 failed
+[    1.138440] mtk-msdc 11240000.mmc: Looking up vqmmc2-supply property in node /soc/mmc@11240000 failed
+[    1.138965] usbcore: registered new interface driver usbhid
+[    1.143887] usbhid: USB HID core driver
+[    1.158862] SPI driver st-magn-spi has no spi_device_id for st,lis3mdl-magn
+[    1.159838] SPI driver st-magn-spi has no spi_device_id for st,lsm303agr-magn
+[    1.160793] SPI driver st-magn-spi has no spi_device_id for st,lsm9ds1-magn
+[    1.161725] SPI driver st-magn-spi has no spi_device_id for st,lsm303c-magn
+[    1.165023] hw perfevents: enabled with armv8_pmuv3 PMU driver, 7 (0,8000003f) counters available
+[    1.168312] watchdog: NMI not fully supported
+[    1.168913] watchdog: Hard watchdog permanently disabled
+[    1.170878] gnss: GNSS driver registered with major 511
+[    1.176338] mt6357-sound mt6357-sound: Looking up vaud28-supply from device node /soc/pwrap@1000d000/pmic/audio-codec
+[    1.178319] mt6765-afe-pcm 11220000.clock-controller:audio-controller: mtk_afe_combine_sub_dai(), num of dai 15
+[    1.180873] mt6765_mt6357 sound: audio-routing not found: using legacy probe
+[    1.181978] mt6765_mt6357 sound: DANDELION audio: before soc_probe
+[    1.182826] mt6765_mt6357 sound: No pinctrl, skipping pin states
+[    1.183636] mt6765_mt6357 sound: DANDELION audio: soc_probe ret=0
+[    1.184455] mt6765_mt6357 sound: DANDELION audio: before register_card
+[    1.186360] mt6765-afe-pcm 11220000.clock-controller:audio-controller: DANDELION soc: probing component 11220000.clock-controller:audio-controller
+[    1.188127] mt6765-afe-pcm 11220000.clock-controller:audio-controller: DANDELION soc: dapm controls ret=0 11220000.clock-controller:audio-controller
+[    1.189920] mt6765-afe-pcm 11220000.clock-controller:audio-controller: DANDELION soc: component probe enter 11220000.clock-controller:audio-controller
+[    1.191685] mt6765-afe-pcm 11220000.clock-controller:audio-controller: DANDELION afe comp: init_regmap
+[    1.192916] mt6765-afe-pcm 11220000.clock-controller:audio-controller: DANDELION afe comp: init_regmap done
+[    1.194201] mt6765-afe-pcm 11220000.clock-controller:audio-controller: DANDELION afe comp: adding sub dai ctl
+[    1.195510] mt6765-afe-pcm 11220000.clock-controller:audio-controller: DANDELION subdai: controls/widgets loop
+[    1.197028] mt6765-afe-pcm 11220000.clock-controller:audio-controller: DANDELION subdai: routes loop

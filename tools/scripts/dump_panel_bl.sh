@@ -1,0 +1,10 @@
+#!/bin/bash
+F="$HOME/AI_Project/Redmi_9A/kernel_7.1_mainline/drivers/gpu/drm/panel/panel-fitipower-ft8006s.c"
+echo "=== struct ==="
+sed -n '24,36p' "$F"
+echo "=== work + update ==="
+sed -n '228,268p' "$F"
+echo "=== probe bl ==="
+sed -n '306,326p' "$F"
+echo "=== prepare tail ==="
+sed -n '150,168p' "$F"

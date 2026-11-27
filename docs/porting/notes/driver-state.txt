@@ -1,0 +1,78 @@
+﻿===== KERNEL =====
+Linux ubuntu-dandelion 7.1.0-mt6765+ #13 SMP PREEMPT Sat Nov 21 23:44:41 CST 2026 aarch64 aarch64 aarch64 GNU/Linux
+
+===== MODULES =====
+Module                  Size  Used by
+focaltech_ts           61440  0
+
+===== CLASSES =====
+drm           : card0 card1 card1-DSI-1 renderD128 version 
+net           : lo sit0 usb0 
+input         : event0 event1 event2 input0 input1 input2 
+sound         : 
+video4linux   : 
+leds          : 
+backlight     : backlight 
+power_supply  : 
+hwmon         : 
+thermal       : 
+rtc           : rtc0 
+watchdog      : watchdog0 watchdog1 
+mmc           : 
+tty           : console ptmx ptyp0 ptyp1 ptyp2 ptyp3 ptyp4 ptyp5 ptyp6 ptyp7 ptyp8 ptyp9 ptypa ptypb ptypc ptypd ptype ptypf tty tty0 tty1 tty10 tty11 tty12 tty13 tty14 tty15 tty16 tty17 tty18 tty19 tty2 tty20 tty21 tty22 tty23 tty24 tty25 tty26 tty27 tty28 tty29 tty3 tty30 tty31 tty32 tty33 tty34 tty35 tty36 tty37 tty38 tty39 tty4 tty40 tty41 tty42 tty43 tty44 tty45 tty46 tty47 tty48 tty49 tty5 tty50 tty51 tty52 tty53 tty54 tty55 tty56 tty57 tty58 tty59 tty6 tty60 tty61 tty62 tty63 tty7 tty8 tty9 ttyGS0 ttyS0 ttyS1 ttyS2 ttyS3 ttyp0 ttyp1 ttyp2 ttyp3 ttyp4 ttyp5 ttyp6 ttyp7 ttyp8 ttyp9 ttypa ttypb ttypc ttypd ttype ttypf 
+extcon        : 
+phy           : phy-11c80000.dsi-phy.1 phy-11cc0000.t-phy.0 
+
+===== ALSA CARDS =====
+
+===== DRM =====
+/sys/class/drm/card1-DSI-1: connected
+
+===== NET =====
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
+sit0@NONE        DOWN           0.0.0.0 <NOARP> 
+usb0             UP             02:1d:6b:01:04:01 <BROADCAST,MULTICAST,UP,LOWER_UP> 
+
+===== I2C/SPI DEVICES =====
+2-000c 2-0010 2-0020 2-0030 2-0050 2-0054 2-0058 3-0008 3-0027 3-0034 3-004b 3-0050 3-0057 4-0037 4-003c 4-003f 4-0051 5-001a 5-0034 5-006b 6-003e 6-0055 i2c-0 i2c-1 i2c-2 i2c-3 i2c-4 i2c-5 i2c-6 
+spi3.0 
+
+===== DEFERRED =====
+11200000.usb:connector	platform: wait for supplier /soc/i2c@11016000/pmic@34/charger/usb-otg-vbus-regulator
+
+===== DMESG WARN/ERR =====
+[    0.564486] phy phy-11cc0000.t-phy.0: Looking up phy-supply property in node /soc/t-phy@11cc0000/usb-phy@11cc0800 failed
+[    0.615046] mtk-socinfo mtk-socinfo.0.auto: error -ENOENT: Failed to get socinfo data
+[    0.616166] mtk-socinfo mtk-socinfo.0.auto: probe with driver mtk-socinfo failed with error -2
+[    0.618718] mtk-socinfo mtk-socinfo.1.auto: error -ENOENT: Failed to get socinfo data
+[    0.619800] mtk-socinfo mtk-socinfo.1.auto: probe with driver mtk-socinfo failed with error -2
+[    1.133891] mt6357-sound: Failed to locate of_node [id: -1]
+[    1.311867] i2c-mt65xx 11007000.i2c: Looking up vbus-supply property in node /soc/i2c@11007000 failed
+[    1.318406] i2c-mt65xx 11008000.i2c: Looking up vbus-supply property in node /soc/i2c@11008000 failed
+[    1.325027] i2c-mt65xx 11009000.i2c: Looking up vbus-supply property in node /soc/i2c@11009000 failed
+[    1.330303] i2c i2c-2: Failed to register i2c client camera_main_backup at 0x20 (-16)
+[    1.334603] i2c i2c-2: Failed to create I2C device for /soc/i2c@11009000/camera_main_backup@20
+[    1.336916] i2c i2c-2: Failed to register i2c client camera_main_two_bac at 0x30 (-16)
+[    1.341323] i2c i2c-2: Failed to create I2C device for /soc/i2c@11009000/camera_main_two_backup@30
+[    1.347559] i2c-mt65xx 1100f000.i2c: Looking up vbus-supply property in node /soc/i2c@1100f000 failed
+[    1.356521] i2c-mt65xx 11011000.i2c: Looking up vbus-supply property in node /soc/i2c@11011000 failed
+[    1.361392] i2c i2c-4: Failed to register i2c client camera_sub_backup at 0x3f (-16)
+[    1.365653] i2c i2c-4: Failed to create I2C device for /soc/i2c@11011000/camera_sub_backup@3f
+[    1.371074] i2c-mt65xx 1100d000.i2c: Looking up vbus-supply property in node /soc/i2c@1100d000 failed
+[    1.376644] i2c i2c-6: Failed to create I2C device for /soc/i2c@1100d000/tps65132_driver@3E
+[    1.382819] i2c-mt65xx 11016000.i2c: Looking up vbus-supply property in node /soc/i2c@11016000 failed
+[    1.387895] mt6370 5-0034: error -ENXIO: Failed to check vendor info
+[    1.391448] i2c i2c-5: Failed to register i2c client switching_charger at 0x6b (-16)
+[    1.395700] i2c i2c-5: Failed to create I2C device for /soc/i2c@11016000/switching_charger@6b
+[    1.408078] mtk-wdt 10007000.reset-controller: Watchdog enabled (timeout=31 sec, nowayout=0)
+[    1.439768] mtk-msdc 11230000.mmc: Looking up vqmmc2-supply property in node /soc/mmc@11230000 failed
+[    1.440510] mtk-msdc 11240000.mmc: Looking up vqmmc2-supply property in node /soc/mmc@11240000 failed
+[    1.645727] phy phy-11c80000.dsi-phy.1: Looking up phy-supply property in node /soc/dsi-phy@11c80000 failed
+[    1.654331] pwm-backlight backlight: Looking up power-supply property in node /backlight failed
+[    1.732729] faux_driver regulatory: Direct firmware load for regulatory.db failed with error -2
+[    1.733910] cfg80211: failed to load regulatory.db
+[   12.278483] platform 11200000.usb:connector: deferred probe pending: platform: wait for supplier /soc/i2c@11016000/pmic@34/charger/usb-otg-vbus-regulator
+[   77.797728] systemd[1]: systemd-journald-dev-log.socket: SO_PASSSEC failed: Operation not supported
+[   77.802591] systemd[1]: systemd-journald.socket: SO_PASSSEC failed: Operation not supported
+[   77.804264] systemd[1]: systemd-journald.socket: SO_PASSSEC failed: Operation not supported
+[  270.560330] mediatek-drm mediatek-drm.3.auto: [drm] *ERROR* mtk_crtc 0 CMDQ execute command timeout!

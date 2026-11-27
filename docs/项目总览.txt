@@ -1,0 +1,259 @@
+Redmi 9A（dandelion）Linux 主线系统项目总览
+===============================================
+
+文档版本：2026-11-27
+项目定位：将 Redmi 9A / MediaTek MT6762G（dandelion）从“可启动的主线内核移植”
+逐步建设为可复现构建、可安装、可维护的 ARM64 Linux 手机系统。
+
+
+一、项目结论
+------------
+
+本项目已经跨过了最困难的“能否运行 Linux 桌面”的门槛。它目前并非只有内核：
+
+  - Linux 7.1 主线化内核可在真机启动；
+  - Ubuntu 24.04 arm64 根文件系统可运行；
+  - Phosh / Phoc 图形桌面链路可进入；
+  - 屏幕、背光、触摸、按键、eMMC、microSD、USB gadget、基础充电/电量、
+    听筒与外放、振动等硬件已有工作证据；
+  - PowerVR GE8320 的厂商内核桥接与 Mesa Vulkan 用户态可运行；
+  - 现有 USB 网络/SSH 可作为开发和救援通道。
+
+因此，近期最有价值的方向不是追求“一次性补齐所有手机功能”，而是把现有成果
+产品化为 Developer Phone（开发者手机）v0.1：可构建、可刷写、可回滚、可诊断、
+可持续迭代。Wi-Fi/蓝牙、蜂窝网络、相机等体量巨大的项目应独立管理，不应阻塞
+首个可用版本。
+
+
+二、硬件与软件基线
+------------------
+
+设备：
+  型号：Redmi 9A（代号 dandelion）
+  SoC：MediaTek MT6762G / MT6765 系列平台
+  CPU：ARM64
+  GPU：PowerVR GE8320，BVNC 22.87.104.18
+  屏幕：720 x 1600 DSI 面板
+
+软件：
+  内核：Linux 7.1，自维护 MT6765/dandelion 树
+  内核配置：kernel/configs/dandelion-7.1.config
+  用户空间：Ubuntu 24.04 arm64
+  桌面：greetd -> phosh-session -> phoc / Phosh
+  图形：DRM/KMS + 厂商 PowerVR bridge；Mesa PowerVR Vulkan 已验证
+  设备 rootfs：现有 Ubuntu 根文件系统位于独立 data 分区；另有 Alpine 救援分区
+
+启动与存储注意事项：
+  - boot 分区使用 Android boot image 格式，涉及 bootloader 和 AVB/vbmeta 验证；
+  - rootfs 与 Android 原厂分区/动态分区不是同一概念，刷写或恢复前必须确认分区目标；
+  - 任何实验镜像都应保留已知可启动镜像和救援路径；
+  - 不应把 console=ttyGS0 重新加入常用图形启动镜像，历史上它可能造成早期启动问题。
+
+
+三、当前已具备的能力
+--------------------
+
+1. 核心启动与存储
+  - 内核能够启动并挂载 Ubuntu rootfs；
+  - eMMC、microSD、RTC、看门狗、PMIC、I2C、SPI 等基础设施可用；
+  - 已具备 BusyBox initramfs 与 Alpine 救援思路；
+  - 有 boot 镜像、DTB、模块和日志归档，便于回溯实验。
+
+2. 人机交互
+  - DRM/KMS、MediaTek DSI 显示工作，面板分辨率为 720 x 1600；
+  - 背光采用面板 DSI 0x51 控制，亮度范围为 1 至 2047；
+  - FocalTech 触摸屏可用；
+  - 音量键与电源键可产生输入事件；
+  - 振动马达通过 MT6357 vibr LDO 驱动，已完成真机振感验证。
+
+3. 图形和桌面
+  - Phosh/Phoc 可运行，常用路径使用厂商 GLES bridge；
+  - pvrsrvkm 内核模块与相应固件可运行；
+  - Mesa PowerVR Vulkan 可完成 clear、三角形、纹理、深度/混合等回归；
+  - vk_kms2 已验证 Vulkan 渲染至 DRM dumb buffer 再 KMS 扫描输出的零 CPU 拷贝路径；
+  - 自研 Wayland 合成器 vk_wl 已具备 wl_shm、xdg-shell 基础、输入、dma-buf 等协议子集；
+  - 真实 GTK/foot 等客户端仍需作为兼容性验收目标。
+
+4. 音频、电源与连接
+  - 听筒、外放播放链路已有工作记录；
+  - 目前仍使用 dandelion-audio.service 配置临时 mixer 路由，尚未完全收敛到 UCM2；
+  - bq256xx 充电器和 ADC battery 提供基础充电、电量信息；
+  - USB gadget（含网络/串口能力）是当前可靠的开发通道；
+  - USB Host/OTG 的 connector 探测已推进，但 Host VBUS 供电仍待实现。
+
+
+四、已知限制与原则
+--------------------
+
+1. Wi-Fi 与蓝牙
+  本机内置无线为 MediaTek CONNAC，走 AXI HIF，并非可用通用 SDIO/mt76 驱动
+解决的小问题。厂商 gen4m 和 conninfra 代码规模很大，移植成本高且耦合严重。
+短期方案应是 USB gadget 网络、Android USB tethering 或 USB 网卡；无线驱动应
+作为长期独立分支，不阻塞系统发行。
+
+2. 蜂窝网络、相机和传感器
+  这些功能依赖厂商专有驱动、SCP/协处理器或未完成的板级描述。它们很重要，但不
+属于 v0.1 的前置条件。传感器可先独立使用 i2c-gpio 等实验链路验证，避免污染
+稳定设备树和日常镜像。
+
+3. 电源管理
+  thermal zone、挂起/唤醒、续航与充电限流/温控尚未完成系统性验证。在证据充分前，
+图形会话不应默认启用 suspend；系统可先采用不自动挂起的保守策略。
+
+4. 图形栈
+  PowerVR 当前可用，但存在日志中的 UM/FW 对齐告警，Mesa 全屏性能也未追平厂商。
+这些问题应持续记录和回归测试，但不应破坏已经稳定的 Phosh + GLES 路径。新图形
+实验应在独立开关、独立镜像或测试分支中进行。
+
+
+五、项目目录职责
+----------------
+
+README.md
+  项目入口、目录说明和常用命令。
+
+docs/STATUS.md
+  当前硬件能力的事实基线。功能是否“已工作”应以这里及其证据为准。
+
+docs/porting/
+  移植过程、GPU/显示/触摸/合成器细节及历史交接资料。
+
+configs/
+  经过验证的内核配置备份。
+
+src/
+  板级辅助驱动、测试程序和原型源码。
+
+data/
+  固件、设备树相关数据、密钥与静态资产。私钥不应进入公开发布物。
+
+dist/
+  内核、模块、DTB、boot 镜像等构建产物；适合交付，不应是唯一源码来源。
+
+ubuntu/
+  Ubuntu rootfs、包/脚本归档、systemd units、音频交接和 rootfs 构建资料。
+
+logs/
+  真机串口、journal、诊断与失败日志，应按镜像版本和日期保存。
+
+
+六、推荐的发行工程结构
+----------------------
+
+随着项目成熟，建议将逻辑逐步收束为下列职责（不要求立即大规模移动现有文件）：
+
+  kernel/       内核源码及最小化、可审查的补丁集
+  device/       dandelion DTS、固件、模块清单、硬件策略
+  rootfs/       Ubuntu 包清单、overlay、systemd units、首次启动配置
+  installer/    镜像打包、刷写、备份、回滚、救援入口
+  tests/        真机 smoke tests 与功能验收脚本
+  scripts/      build、bundle、flash、collect-logs 等统一入口
+  releases/     manifest、校验和、变更日志、已知问题
+
+核心思想是把“某次手工成功”变成“任何维护者可重现的版本”。
+
+
+七、v0.1 Developer Phone 的建议验收标准
+---------------------------------------
+
+v0.1 不以全部硬件可用为目标，而应以以下能力为发布门槛：
+
+  [ ] 一条命令或一个明确步骤可构建 kernel、modules、DTB、rootfs 和 boot image；
+  [ ] 每个发布物有版本号、构建时间、内核版本、DTB/rootfs 哈希和变更说明；
+  [ ] 可从 fastboot/既定恢复流程刷入，且不改写未授权的 Android 分区；
+  [ ] 可稳定连续冷启动进入 Phosh；
+  [ ] 显示、背光、触摸、物理按键、GPU 桌面、基础声音、充电状态均通过验收；
+  [ ] USB gadget 网络和 SSH 可用，用于调试与救援；
+  [ ] U 盘/键鼠等 USB Host 功能在 VBUS 完成后通过验收；
+  [ ] 失败时能留下 kernel log、journal、版本信息，并可启动救援系统或回滚；
+  [ ] 关键功能有自动或半自动 smoke test，而不仅是口头确认。
+
+
+八、建议的开发优先级
+--------------------
+
+阶段 A：稳定和可复现（最高优先级）
+  1. 确定单一“稳定基线”boot image、DTB、模块与 rootfs 的对应关系；
+  2. 建立 release manifest，作为版本事实来源；
+  3. 统一构建、打包、部署和日志采集入口；
+  4. 把回滚镜像、救援镜像和分区操作写成可审计流程；
+  5. 编写真机 smoke test。
+
+阶段 B：可日用性
+  1. 完成 USB Host VBUS，获得 U 盘、键鼠、USB 网卡能力；
+  2. 用真实 GTK/foot 客户端验证 Wayland、输入、焦点、剪贴板等；
+  3. 将临时音频 mixer 收敛为 UCM2，验证麦克风；
+  4. 校准充电、电量、限流与温度报告；
+  5. 审计 suspend/resume，并在未通过前保持默认禁用。
+
+阶段 C：系统质量
+  1. 补 MT6765 thermal zones 与过热保护；
+  2. 对 GPU 性能、稳定性和警告建立固定回归；
+  3. 完善首启向导、用户管理、软件源和升级策略；
+  4. 提供完整的用户文档、故障收集和已知问题清单。
+
+阶段 D：长期硬件项目
+  1. 评估并隔离 Wi-Fi/蓝牙厂商驱动移植；
+  2. 调制解调器与通话数据链路；
+  3. 相机和 ISP；
+  4. SCP 传感器与自动亮度；
+  5. 更深度的功耗优化。
+
+
+九、构建与发布纪律
+------------------
+
+每次可供他人尝试的镜像都应包含：
+
+  - 发行名，例如 dandelion-linux-v0.1.0-dev；
+  - 内核 git commit 或源码快照标识；
+  - 内核 config、DTB 与 modules 的一致性校验；
+  - rootfs 包列表/overlay 版本；
+  - boot image、vbmeta（如适用）的 SHA-256；
+  - 刷写步骤、回滚步骤与已知风险；
+  - 本次已验证和未验证的硬件清单。
+
+不要以文件名中的 stable、rXX、audioXX 等历史编号作为唯一版本语义。它们适合
+实验追踪，却无法表达“哪些组件彼此兼容”。应逐步由 manifest 建立明确组合：
+
+  release 版本 -> kernel -> config -> DTB -> modules -> firmware -> rootfs -> boot image
+
+同样，README、STATUS、Ubuntu 子项目文档出现不同“当前 boot”描述时，应优先更新
+manifest 和 STATUS，再由其他文档链接到唯一的权威版本记录。
+
+
+十、安全与数据管理
+------------------
+
+  - data/keys/ 中若存在 SSH 私钥或测试签名私钥，不应上传到公开仓库或放入发布包；
+  - 若私钥曾离开受控环境，应生成新密钥并撤销旧公钥；
+  - AVB 测试 key 仅适用于已解锁、明确标注的开发设备；
+  - 发布镜像不得默认保存开发者 SSH 私钥、自动登录口令或敏感 journal；
+  - 从真机导出的 journal、pstore、分区备份可能含个人数据，应按私有调试资料管理；
+  - 对分区写入脚本实施“先显示目标、再确认、最后写入”的策略。
+
+
+十一、维护原则
+--------------
+
+  1. 事实与猜测分开记录：驱动结论必须附日志、寄存器证据或真机复现步骤。
+  2. 稳定链路不随实验改动：Phosh/GLES、已工作音频和稳定 DTB 需要独立保护。
+  3. 每项硬件功能都有最小验收法：启动、设备节点、功能结果、重启后复测。
+  4. 每次刷机前都保留已知可启动的 boot image、rootfs 备份和恢复命令。
+  5. 新功能优先以可回滚的模块、overlay、独立 DTB 或独立实验镜像实现。
+  6. 不让长期专有驱动移植阻塞开源系统的可用发布。
+
+
+十二、下一步（建议立即执行）
+------------------------------
+
+  1. 指定当前真正稳定的 boot + DTB + rootfs 组合，写入一个 release manifest；
+  2. 整理一套从干净环境到 boot image 的构建命令；
+  3. 整理一套安全刷写、备份与回滚命令；
+  4. 为显示、触摸、GPU、声音、充电、USB 网络写 smoke test；
+  5. 完成 USB Host VBUS；
+  6. 验证真实 Wayland 客户端与麦克风/UCM2；
+  7. 在上述完成后再发布第一个 Developer Phone 预览版。
+
+最终愿景不是简单地“让 Redmi 9A 跑起来”，而是形成一个任何具备设备和源码的维护者
+都能构建、安装、验证、诊断和继续开发的 dandelion Linux 系统工程。

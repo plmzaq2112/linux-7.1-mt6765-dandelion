@@ -1,0 +1,23 @@
+#!/bin/sh
+# start-phosh - greetd default_session command for the Redmi 9A.
+# Tries Phosh on the PowerVR GE8320 (phoc-pvr) first; if that session dies
+# within 20 s it is marked failed for this boot and the software-rendered
+# (pixman/llvmpipe) session is started instead.
+# Disable GPU acceleration permanently: touch /etc/phosh/pvr-disable
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+FAILED="$XDG_RUNTIME_DIR/pvr-phoc-failed"
+
+if [ -x /usr/local/bin/phoc-pvr ] && [ ! -e /etc/phosh/pvr-disable ] && [ ! -e "$FAILED" ]; then
+	start=$(date +%s)
+	sed 's|^exec "${COMPOSITOR}"|exec /usr/local/bin/phoc-pvr|' /usr/bin/phosh-session > "$XDG_RUNTIME_DIR/phosh-session-pvr"
+	sh "$XDG_RUNTIME_DIR/phosh-session-pvr" > "$HOME/phosh.log" 2>&1
+	rc=$?
+	if [ $(( $(date +%s) - start )) -ge 20 ]; then
+		exit "$rc"
+	fi
+	mv -f "$HOME/phosh.log" "$HOME/phosh-pvr-failed.log"
+	touch "$FAILED"
+fi
+
+export WLR_RENDERER_ALLOW_SOFTWARE=1
+exec /usr/bin/phosh-session > "$HOME/phosh.log" 2>&1

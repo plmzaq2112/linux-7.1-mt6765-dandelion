@@ -1,0 +1,9 @@
+[Unit]
+Description=Mark Ubuntu boot as successful
+
+[Timer]
+OnBootSec=45s
+Unit=ubuntu-mark.service
+
+[Install]
+WantedBy=timers.target

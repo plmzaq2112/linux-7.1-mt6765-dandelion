@@ -1,0 +1,6 @@
+[Unit]
+Description=Confirm a successful Ubuntu boot
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'touch /etc/dandelion-rootfs-ok'

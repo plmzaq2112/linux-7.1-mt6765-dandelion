@@ -1,0 +1,4 @@
+?? drivers/leds/regulator-vibrator.c
+?? drivers/misc/rail_en.c
+?? drivers/mmc/host/mtk-sd.c.r3-before
+?? vendor-unpack/

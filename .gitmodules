@@ -1,0 +1,6 @@
+[submodule "kernel/linux"]
+	path = kernel/linux
+	url = https://github.com/evilMyQueen/linux-mt6765.git
+[submodule "graphics/mesa"]
+	path = graphics/mesa
+	url = https://gitlab.freedesktop.org/mesa/mesa.git

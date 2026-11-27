@@ -1,0 +1,155 @@
+﻿===== BLOCK =====
+loop0
+loop1
+loop2
+loop3
+loop4
+loop5
+loop6
+loop7
+mmcblk0
+mmcblk0boot0
+mmcblk0boot1
+mmcblk1
+nbd0
+nbd1
+nbd10
+nbd11
+nbd12
+nbd13
+nbd14
+nbd15
+nbd2
+nbd3
+nbd4
+nbd5
+nbd6
+nbd7
+nbd8
+nbd9
+NAME          SIZE TYPE MOUNTPOINT
+nbd0            0B disk 
+nbd1            0B disk 
+nbd2            0B disk 
+nbd3            0B disk 
+nbd4            0B disk 
+nbd5            0B disk 
+nbd6            0B disk 
+nbd7            0B disk 
+mmcblk0      58.2G disk 
+鈹溾攢mmcblk0p1     1M part 
+鈹溾攢mmcblk0p2    64M part 
+鈹溾攢mmcblk0p3   512K part 
+鈹溾攢mmcblk0p4    20M part 
+鈹溾攢mmcblk0p5    16M part 
+鈹溾攢mmcblk0p6     8M part 
+鈹溾攢mmcblk0p7   832M part 
+鈹溾攢mmcblk0p8     8M part 
+鈹溾攢mmcblk0p9     8M part 
+鈹溾攢mmcblk0p10    1M part 
+
+===== DRM RENDER NODE =====
+/sys/devices/faux/vgem
+DRIVER=faux_driver
+/sys/class/drm/card0/device/driver -> /sys/bus/faux/drivers/faux_driver
+/sys/class/drm/card1/device/driver -> /sys/bus/platform/drivers/mediatek-drm
+
+===== MMC =====
+mmc0:0001
+mmc1:0001
+
+===== USB =====
+1-0:1.0
+usb1
+
+===== ACTIVE IRQS =====
+  11:     352960     364206     400624     421623     369804     335533     294621     274302  GICv3        30 Level     arch_timer
+  16:       1436          0          0          0          0          0          0          0  mt-eint       0 Edge      fts_ts
+ 160:         72          0          0          0          0          0          0          0  mt-eint     144 Level     mt6358-irq
+ 176:       1361          0          0          0          0          0          0          0  MT_SYSIRQ   154 Level     mtk_cmdq
+ 182:          5          0          0          0          0          0          0          0  MT_SYSIRQ    91 Level     ttyS0
+ 183:       9827          0          0          0          0          0          0          0  MT_SYSIRQ   217 Level     1400b000.ovl
+ 184:      19531          0          0          0          0          0          0          0  MT_SYSIRQ   229 Level     1400c000.ovl
+ 187:          0          0         15          0          0          0          0          0  mt6358-irq   48 Edge      mtk-pmic-keys
+ 189:          0          0         15          0          0          0          0          0  mt6358-irq   50 Edge      mtk-pmic-keys
+ 191:       1452          0          0          0          0          0          0          0  MT_SYSIRQ   129 Level     11013000.spi
+ 192:       3755          0          0          0          0          0          0          0  MT_SYSIRQ    73 Level     musb-hdrc.5.auto
+ 193:         26          0          0          0          0          0          0          0  MT_SYSIRQ   180 Edge      mt6779-keypad
+ 200:          1          0          0          0          0          0          0          0  MT_SYSIRQ   130 Level     11016000.i2c
+ 202:      43101          0          0          0          0          0          0          0  MT_SYSIRQ    79 Level     11230000.mmc
+ 203:        238          0          0          0          0          0          0          0  MT_SYSIRQ    80 Level     11240000.mmc
+ 205:        144          0          0          0          0          0          0          0  MT_SYSIRQ   225 Level     14014000.dsi
+IPI0:       4015       3640       3440       6179       3310       3516       3124       4073  Rescheduling interrupts
+IPI1:      73406      59223      52627      52251      51395      58139      44586      34422  Function call interrupts
+IPI5:         24         42         80         25         30         16         13         22  IRQ work interrupts
+
+===== CONFIG (selected) =====
+CONFIG_DRM_PVR_LEGACY=m
+CONFIG_POWER_SUPPLY=y
+# CONFIG_POWER_SUPPLY_DEBUG is not set
+CONFIG_POWER_SUPPLY_HWMON=y
+# CONFIG_CHARGER_ADP5061 is not set
+# CONFIG_BATTERY_CHAGALL is not set
+# CONFIG_BATTERY_CW2015 is not set
+# CONFIG_BATTERY_DS2780 is not set
+# CONFIG_BATTERY_DS2781 is not set
+# CONFIG_BATTERY_DS2782 is not set
+# CONFIG_BATTERY_SAMSUNG_SDI is not set
+# CONFIG_BATTERY_S2MU005 is not set
+# CONFIG_BATTERY_SBS is not set
+# CONFIG_CHARGER_SBS is not set
+# CONFIG_BATTERY_BQ27XXX is not set
+# CONFIG_BATTERY_MAX17040 is not set
+# CONFIG_BATTERY_MAX17042 is not set
+# CONFIG_BATTERY_MAX1720X is not set
+# CONFIG_CHARGER_ISP1704 is not set
+# CONFIG_CHARGER_MAX8903 is not set
+# CONFIG_CHARGER_LP8727 is not set
+CONFIG_CHARGER_GPIO=y
+# CONFIG_CHARGER_MANAGER is not set
+# CONFIG_CHARGER_LT3651 is not set
+# CONFIG_CHARGER_LTC4162L is not set
+# CONFIG_CHARGER_DETECTOR_MAX14656 is not set
+# CONFIG_CHARGER_MAX77976 is not set
+# CONFIG_CHARGER_MAX8971 is not set
+CONFIG_CHARGER_MT6370=y
+# CONFIG_CHARGER_BQ2415X is not set
+# CONFIG_CHARGER_BQ24190 is not set
+# CONFIG_CHARGER_BQ24257 is not set
+# CONFIG_CHARGER_BQ24735 is not set
+# CONFIG_CHARGER_BQ2515X is not set
+CONFIG_CHARGER_BQ25890=y
+CONFIG_CHARGER_BQ25980=y
+# CONFIG_CHARGER_BQ256XX is not set
+# CONFIG_CHARGER_SMB347 is not set
+# CONFIG_BATTERY_GAUGE_LTC2941 is not set
+# CONFIG_BATTERY_GOLDFISH is not set
+
+===== DMESG (audio/thermal/power/wifi) =====
+[    0.000000] Kernel command line: earlycon=mtk8250,0x11002000 console=ttyS0,921600n1 console=tty0                clk_ignore_unused regulator_ignore_unused pd_ignore_unused PMOS_NOSPLASH ramoops.mem_address=0x47c90000 ramoops.mem_size=0xe0000 ramoops.pmsg_size=0x10000 ramoops.console_size=0x40000 has_battery_removed=0 androidboot.boot_devices=bootdevice,soc/11230000.mmc,11230000.mmc ramoops.mem_address=0x47c90000 ramoops.mem_size=0xe0000 ramoops.pmsg_size=0x10000 ramoops.console_size=0x40000 androidboot.mode=normal  androidboot.chipid=0xdc79d4e3c93fb0a3d5453f72ff7d7575  androidboot.cpuid=0xdc79d4e3c93fb0a3d5453f72ff7d75754d9514f7 bootopt=64S3,32N2,64N2 kpti=off ignore_loglevel log_buf_len=4M fbcon=font:TER16x32 console=tty0 panic=0 ramoops.mem_address=0x47c90000 ramoops.mem_size=0xe0000 ramoops.console_size=0x40000 ramoops.pmsg_size=0x10000 console=ttyGS0,115200 systemd.mask=dandelion-early-shell.service root=/dev/ram  androidboot.verifiedbootstate=orange androidboot.opt_sim_count=2 \
+[    0.000000] Unknown kernel command line parameters "PMOS_NOSPLASH has_battery_removed=0 bootopt=64S3,32N2,64N2 usb2jtag_mode=0", will be passed to user space.
+[    0.174869] thermal_sys: Registered thermal governor 'step_wise'
+[    0.174884] thermal_sys: Registered thermal governor 'user_space'
+[    0.175721] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.423176] Bluetooth: Core ver 2.22
+[    0.423757] NET: Registered PF_BLUETOOTH protocol family
+[    0.424499] Bluetooth: HCI device and connection manager initialized
+[    0.425375] Bluetooth: HCI socket layer initialized
+[    0.426081] Bluetooth: L2CAP socket layer initialized
+[    0.426798] Bluetooth: SCO socket layer initialized
+[    1.133891] mt6357-sound: Failed to locate of_node [id: -1]
+[    1.167273] vcn33-wifi: 3300 <--> 3500 mV at 3500 mV 2147483647 mW budget, disabled
+[    1.295284] input: mtk-pmic-keys as /devices/platform/soc/1000d000.pwrap/1000d000.pwrap:pmic/mt6357-keys/input/input1
+[    1.302729] mt6397-rtc mt6357-rtc: registered as rtc0
+[    1.304226] mt6397-rtc mt6357-rtc: setting system clock to 2086-11-20T16:09:42 UTC (3688646982)
+[    1.387895] mt6370 5-0034: error -ENXIO: Failed to check vendor info
+[    1.391448] i2c i2c-5: Failed to register i2c client switching_charger at 0x6b (-16)
+[    1.393522] i2c i2c-5: of_i2c: Failure registering /soc/i2c@11016000/switching_charger@6b
+[    1.395700] i2c i2c-5: Failed to create I2C device for /soc/i2c@11016000/switching_charger@6b
+[    1.420753] Bluetooth: HCI UART driver ver 2.3
+[    1.421964] Bluetooth: HCI UART protocol H4 registered
+[    1.423405] Bluetooth: HCI UART protocol LL registered
+[    1.491576] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    1.493196] Bluetooth: HIDP socket layer initialized
+[    1.746909]     has_battery_removed=0
+[   12.278483] platform 11200000.usb:connector: deferred probe pending: platform: wait for supplier /soc/i2c@11016000/pmic@34/charger/usb-otg-vbus-regulator

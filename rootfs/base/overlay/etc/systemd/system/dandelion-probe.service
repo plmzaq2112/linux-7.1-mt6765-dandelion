@@ -1,0 +1,13 @@
+[Unit]
+Description=Dandelion boot probe
+DefaultDependencies=no
+After=local-fs.target
+Before=sysinit.target
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -c 'dmesg > /var/log/dmesg-ubuntu.log 2>&1; while true; do { echo "=== uptime $(cat /proc/uptime)"; systemctl list-jobs --no-pager; echo "-- failed --"; systemctl --failed --no-pager; echo "-- activating --"; systemctl list-units --state=activating --no-pager --no-legend; } >> /var/log/probe.log 2>&1; sleep 10; done'
+Restart=always
+
+[Install]
+WantedBy=sysinit.target

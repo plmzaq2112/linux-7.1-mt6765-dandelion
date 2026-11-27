@@ -1,0 +1,11 @@
+[Unit]
+Description=Dump boot diagnostics for dandelion Ubuntu
+After=multi-user.target
+Wants=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'journalctl -b --no-pager -o short-monotonic > /var/log/ubuntu-boot.log 2>&1; echo "=== FAILED ===" >> /var/log/ubuntu-boot.log; systemctl --failed --no-pager >> /var/log/ubuntu-boot.log 2>&1; echo "=== DRM ===" >> /var/log/ubuntu-boot.log; ls -l /dev/dri >> /var/log/ubuntu-boot.log 2>&1; echo "=== ACTIVE ===" >> /var/log/ubuntu-boot.log; systemctl is-active greetd graphical.target multi-user.target >> /var/log/ubuntu-boot.log 2>&1'
+
+[Install]
+WantedBy=multi-user.target

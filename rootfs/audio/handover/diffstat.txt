@@ -1,0 +1,18 @@
+ drivers/clk/mediatek/clk-mt6765-audio.c            |   26 +-
+ sound/soc/mediatek/Kconfig                         |   20 +
+ sound/soc/mediatek/Makefile                        |    1 +
+ .../soc/mediatek/common/mtk-afe-platform-driver.c  |   10 +-
+ sound/soc/mediatek/common/mtk-soundcard-driver.c   |    4 +
+ sound/soc/mediatek/mt6765/Makefile                 |   15 +
+ sound/soc/mediatek/mt6765/mt6765-afe-clk.c         |  420 ++++
+ sound/soc/mediatek/mt6765/mt6765-afe-clk.h         |   32 +
+ sound/soc/mediatek/mt6765/mt6765-afe-common.h      |  448 ++++
+ sound/soc/mediatek/mt6765/mt6765-afe-pcm.c         | 2270 ++++++++++++++++++++
+ sound/soc/mediatek/mt6765/mt6765-dai-adda.c        |  311 +++
+ sound/soc/mediatek/mt6765/mt6765-dai-dmic.c        |  310 +++
+ sound/soc/mediatek/mt6765/mt6765-dai-i2s.c         |  845 ++++++++
+ sound/soc/mediatek/mt6765/mt6765-dai-pcm.c         |  293 +++
+ sound/soc/mediatek/mt6765/mt6765-mt6357.c          |  353 +++
+ sound/soc/mediatek/mt6765/mt6765-reg.h             |  993 +++++++++
+ sound/soc/soc-core.c                               |    9 +
+ 17 files changed, 6357 insertions(+), 3 deletions(-)

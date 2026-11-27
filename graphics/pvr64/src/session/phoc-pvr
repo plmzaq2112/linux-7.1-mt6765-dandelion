@@ -1,0 +1,24 @@
+#!/bin/sh
+# phoc-pvr - run phoc on the PowerVR GE8320 GPU through the pvr-bridge
+# (glibc libEGL.so.1 / libGLESv2.so.2 / libgbm.so.1 wrapping the Android
+# DDK 1.13 blobs in /vendor/lib64).  Only phoc gets the bridge; the session
+# started with -E runs with the normal (Mesa) environment.
+BRIDGE=/vendor/lib64/pvr-bridge
+export LD_LIBRARY_PATH="$BRIDGE:/vendor/lib64:/vendor/lib64/egl"
+export WLR_RENDERER=gles2
+export GSK_RENDERER=gl
+unset WLR_RENDERER_ALLOW_SOFTWARE
+
+CLEAN="env -u WLR_RENDERER -u PVR_EGL_DEBUG"
+n=$#
+nextE=0
+for a in "$@"; do
+	if [ "$nextE" = 1 ]; then
+		a="$CLEAN $a"
+		nextE=0
+	fi
+	[ "$a" = "-E" ] && nextE=1
+	set -- "$@" "$a"
+done
+shift "$n"
+exec /usr/bin/phoc "$@"

@@ -1,0 +1,21 @@
+[Unit]
+Description=Early root shell on ttyGS0
+DefaultDependencies=no
+After=dev-ttyGS0.device
+BindsTo=dev-ttyGS0.device
+Before=sysinit.target
+Conflicts=rescue.service
+
+[Service]
+Type=simple
+ExecStart=-/sbin/agetty --autologin root --keep-baud 115200,57600,38400,9600 - $TERM
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/dev/ttyGS0
+TTYReset=yes
+TTYVHangup=yes
+Restart=always
+RestartSec=0
+
+[Install]
+WantedBy=sysinit.target

@@ -1,0 +1,1917 @@
+diff --git a/src/imagination/common/device_info/ge8300.h b/src/imagination/common/device_info/ge8300.h
+index 4589e4b..bf8b9b4 100644
+--- a/src/imagination/common/device_info/ge8300.h
++++ b/src/imagination/common/device_info/ge8300.h
+@@ -234,4 +234,89 @@ static const struct pvr_device_info pvr_device_info_22_102_54_38 = {
+    .quirks = pvr_device_quirks_22_102_54_38,
+ };
+ 
++
++static const struct pvr_device_features pvr_device_features_22_87_104_18 = {
++   .has_astc = true,
++   .has_common_store_size_in_dwords = true,
++   .has_compute = true,
++   .has_compute_overlap = true,
++   .has_gs_rta_support = true,
++   .has_ipf_creq_pf = true,
++   .has_isp_max_tiles_in_flight = true,
++   .has_isp_samples_per_pixel = true,
++   .has_max_instances_per_pds_task = true,
++   .has_max_multisample = true,
++   .has_max_partitions = true,
++   .has_max_usc_tasks = true,
++   .has_num_clusters = true,
++   .has_num_raster_pipes = true,
++   .has_pbe2_in_xe = true,
++   .has_pbe_filterable_f16 = true,
++   .has_pbe_yuv = true,
++   .has_roguexe = true,
++   .has_simple_internal_parameter_format = false,
++   .has_simple_internal_parameter_format_v1 = false,
++   .has_simple_parameter_format_version = false,
++   .has_slc_cache_line_size_bits = true,
++   .has_tile_size_16x16 = true,
++   .has_tile_size_x = true,
++   .has_tile_size_y = true,
++   .has_tpu_parallel_instances = true,
++   .has_transform_feedback_query_bits = true,
++   .has_unified_store_depth = true,
++   .has_usc_f16sop_u8 = true,
++   .has_usc_itrsmp = true,
++   .has_usc_itrsmp_enhanced = true,
++   .has_usc_itr_parallel_instances = true,
++   .has_usc_min_output_registers_per_pix = true,
++   .has_usc_slots = true,
++   .has_uvs_banks = true,
++   .has_uvs_pba_entries = true,
++   .has_uvs_vtx_entries = true,
++   .has_vdm_cam_size = true,
++
++   .common_store_size_in_dwords = 1024U * 4U * 4U,
++   .isp_max_tiles_in_flight = 4U,
++   .isp_samples_per_pixel = 1U,
++   .max_instances_per_pds_task = 32U,
++   .max_multisample = 4U,
++   .max_partitions = 10U,
++   .max_usc_tasks = 104U,
++   .num_clusters = 1U,
++   .num_raster_pipes = 1U,
++   .simple_parameter_format_version = 0U,
++   .slc_cache_line_size_bits = 512U,
++   .tile_size_x = 16U,
++   .tile_size_y = 16U,
++   .tpu_parallel_instances = 4U,
++   .transform_feedback_query_bits = 32U,
++   .unified_store_depth = 208U,
++   .usc_itr_parallel_instances = 16U,
++   .usc_min_output_registers_per_pix = 2U,
++   .usc_slots = 64U,
++   .uvs_banks = 4U,
++   .uvs_pba_entries = 320U,
++   .uvs_vtx_entries = 288U,
++   .vdm_cam_size = 64U,
++
++   .has_s8xe = true,
++};
++
++#define PVR_DEVICE_IDENT_22_V_104_18 \
++   .device_id = 0x22104018, .series_name = "Rogue", \
++   .public_name = "GE8320", .arch = PVR_DEVICE_ARCH_ROGUE
++
++static const struct pvr_device_info pvr_device_info_22_87_104_18 = {
++   .ident = {
++      PVR_DEVICE_IDENT_22_V_104_18,
++      .b = 22,
++      .v = 87,
++      .n = 104,
++      .c = 18,
++   },
++   .features = pvr_device_features_22_87_104_18,
++   .enhancements = pvr_device_enhancements_22_68_54_30,
++   .quirks = pvr_device_quirks_22_68_54_30,
++};
++
+ #endif /* GE8300_H */
+diff --git a/src/imagination/common/pvr_device_info.c b/src/imagination/common/pvr_device_info.c
+index eb586eb..1a62510 100644
+--- a/src/imagination/common/pvr_device_info.c
++++ b/src/imagination/common/pvr_device_info.c
+@@ -54,6 +54,7 @@ static const struct pvr_device_info *device_infos[] = {
+    &pvr_device_info_22_67_54_30,
+    &pvr_device_info_22_68_54_30,
+    &pvr_device_info_22_102_54_38,
++   &pvr_device_info_22_87_104_18,
+    &pvr_device_info_33_15_11_3,
+    &pvr_device_info_36_29_52_182,
+    &pvr_device_info_36_50_54_182,
+@@ -88,6 +89,7 @@ int pvr_device_info_init(struct pvr_device_info *info, uint64_t bvnc)
+       CASE_PACKED_BVNC_DEVICE_INFO(22, 67, 54, 30);
+       CASE_PACKED_BVNC_DEVICE_INFO(22, 68, 54, 30);
+       CASE_PACKED_BVNC_DEVICE_INFO(22, 102, 54, 38);
++   CASE_PACKED_BVNC_DEVICE_INFO(22, 87, 104, 18);
+       CASE_PACKED_BVNC_DEVICE_INFO(33, 15, 11, 3);
+       CASE_PACKED_BVNC_DEVICE_INFO(36, 29, 52, 182);
+       CASE_PACKED_BVNC_DEVICE_INFO(36, 50, 54, 182);
+diff --git a/src/imagination/include/hwdef/rogue_hw_utils.h b/src/imagination/include/hwdef/rogue_hw_utils.h
+index a859059..75516d6 100644
+--- a/src/imagination/include/hwdef/rogue_hw_utils.h
++++ b/src/imagination/include/hwdef/rogue_hw_utils.h
+@@ -204,8 +204,15 @@ rogue_get_num_macrotiles_xy(const struct pvr_device_info *dev_info,
+    if (PVR_FEATURE_VALUE(dev_info, simple_parameter_format_version, &version))
+       version = 0;
+ 
+-   if (!PVR_HAS_FEATURE(dev_info, simple_internal_parameter_format) ||
+-       version == 2) {
++   /* 1.13 GE8320 (22.87.104.18) tiles the whole surface as one macrotile.
++    * Vendor golden (720x1600): mt1 x1=45, mt2 y1=100, stride=4500.
++    */
++   if (dev_info->ident.b == 22 && dev_info->ident.v == 87 &&
++       dev_info->ident.n == 104) {
++      *x_out = 1;
++      *y_out = 1;
++   } else if (!PVR_HAS_FEATURE(dev_info, simple_internal_parameter_format) ||
++              version == 2) {
+       *x_out = 4;
+       *y_out = 4;
+    } else {
+diff --git a/src/imagination/vulkan/pvr_arch_cmd_buffer.c b/src/imagination/vulkan/pvr_arch_cmd_buffer.c
+index 3071412..7035d22 100644
+--- a/src/imagination/vulkan/pvr_arch_cmd_buffer.c
++++ b/src/imagination/vulkan/pvr_arch_cmd_buffer.c
+@@ -28,6 +28,8 @@
+ #include <stdbool.h>
+ #include <stddef.h>
+ #include <stdint.h>
++#include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <vulkan/vulkan.h>
+ 
+@@ -396,6 +398,7 @@ pvr_cmd_buffer_upload_tables(struct pvr_device *device,
+          return result;
+    }
+ 
++
+    if (cmd_buffer->scissor_array.size > 0) {
+       result = pvr_gpu_upload(device,
+                               device->heaps.general_heap,
+@@ -2576,6 +2579,20 @@ VkResult pvr_arch_cmd_buffer_end_sub_cmd(struct pvr_cmd_buffer *cmd_buffer)
+       if (result != VK_SUCCESS)
+          return pvr_cmd_buffer_set_error_unwarned(cmd_buffer, result);
+ 
++      if (getenv("PVR_DUMP_CS") && gfx_sub_cmd->control_stream.start) {
++         const uint8_t *cs = gfx_sub_cmd->control_stream.start;
++         uint32_t cs_len =
++            (const uint8_t *)gfx_sub_cmd->control_stream.next - cs;
++
++         fprintf(stderr, "pvr-cs len=%u\n", cs_len);
++         for (uint32_t off = 0; off < cs_len && off < 1024; off += 16) {
++            fprintf(stderr, "pvr-cs %04x:", off);
++            for (uint32_t i = 0; i < 16 && off + i < cs_len; i++)
++               fprintf(stderr, " %02x", cs[off + i]);
++            fprintf(stderr, "\n");
++         }
++      }
++
+       if (gfx_sub_cmd->view_index_wanted) {
+          result = pvr_csb_gfx_build_view_index_ctrl_stream(
+             device,
+@@ -7474,6 +7491,14 @@ pvr_setup_isp_depth_bias_scissor_state(struct pvr_cmd_buffer *const cmd_buffer)
+       else
+          bottom = 0U;
+ 
++      {
++         const char *e;
++         if ((e = getenv("PVR13_RGN_R")))
++            right = (uint32_t)atoi(e);
++         if ((e = getenv("PVR13_RGN_B")))
++            bottom = (uint32_t)atoi(e);
++      }
++
+       /* Setup region clip to clip everything outside what was calculated. */
+ 
+       /* FIXME: Should we mask to prevent writing over other words? */
+diff --git a/src/imagination/vulkan/pvr_arch_framebuffer.c b/src/imagination/vulkan/pvr_arch_framebuffer.c
+index e0bc337..35d0116 100644
+--- a/src/imagination/vulkan/pvr_arch_framebuffer.c
++++ b/src/imagination/vulkan/pvr_arch_framebuffer.c
+@@ -17,6 +17,8 @@
+ #include "hwdef/pvr_hw_utils.h"
+ 
+ #include "pvr_cmd_buffer.h"
++#include <stdlib.h>
++
+ #include "pvr_csb.h"
+ #include "pvr_device.h"
+ #include "pvr_entrypoints.h"
+@@ -43,16 +45,19 @@ VkResult PVR_PER_ARCH(ppp_state_create)(struct pvr_device *device,
+    }
+ 
+    pvr_csb_pack (&ppp_state[1], TA_STATE_TERMINATE0, term0) {
+-      term0.clip_right =
+-         DIV_ROUND_UP(
+-            width,
+-            ROGUE_TA_STATE_TERMINATE0_CLIP_RIGHT_BLOCK_SIZE_IN_PIXELS) -
+-         1;
+-      term0.clip_bottom =
+-         DIV_ROUND_UP(
+-            height,
+-            ROGUE_TA_STATE_TERMINATE0_CLIP_BOTTOM_BLOCK_SIZE_IN_PIXELS) -
+-         1;
++      /* 1.13 firmware uses a 16 pixel terminate clip granularity. */
++      term0.clip_right = DIV_ROUND_UP(width, 16) - 1;
++      term0.clip_bottom = DIV_ROUND_UP(height, 16) - 1;
++
++      /* 1.13 probe hooks. */
++      {
++         const char *e;
++
++         if ((e = getenv("PVR13_TERM_R")))
++            term0.clip_right = (uint32_t)atoi(e);
++         if ((e = getenv("PVR13_TERM_B")))
++            term0.clip_bottom = (uint32_t)atoi(e);
++      }
+    }
+ 
+    pvr_csb_pack (&ppp_state[2], TA_STATE_TERMINATE1, term1) {
+diff --git a/src/imagination/vulkan/pvr_arch_job_render.c b/src/imagination/vulkan/pvr_arch_job_render.c
+index f1cc515..a71a143 100644
+--- a/src/imagination/vulkan/pvr_arch_job_render.c
++++ b/src/imagination/vulkan/pvr_arch_job_render.c
+@@ -126,10 +126,24 @@ void pvr_arch_rt_mtile_info_init(const struct pvr_device_info *dev_info,
+ 
+    rogue_get_num_macrotiles_xy(dev_info, &info->mtiles_x, &info->mtiles_y);
+ 
+-   if (PVR_HAS_FEATURE(dev_info, simple_internal_parameter_format)) {
++   if (dev_info->ident.b == 22 && dev_info->ident.v == 87 &&
++       dev_info->ident.n == 104) {
++      /* 1.13 GE8320: one macrotile spanning the whole render target.
++       * Vendor golden (720x1600, 45x100 tiles): MTILE1.x1 = 45,
++       * MTILE2.y1 = 100, x2/x3 = y2/y3 = 0, MTileStride = 4500.
++       */
++      info->mtile_x1 = info->num_tiles_x;
++      info->mtile_y1 = info->num_tiles_y;
++      info->mtile_x2 = 0;
++      info->mtile_y2 = 0;
++      info->mtile_x3 = 0;
++      info->mtile_y3 = 0;
++      info->x_tile_max = info->num_tiles_x - 1;
++      info->y_tile_max = info->num_tiles_y - 1;
++   } else if (PVR_HAS_FEATURE(dev_info, simple_internal_parameter_format)) {
+       assert(PVR_GET_FEATURE_VALUE(dev_info,
+                                    simple_parameter_format_version,
+-                                   0) == 2);
++                                   0) >= 1);
+       /* Set up 16 macrotiles with a multiple of 2x2 tiles per macrotile,
+        * which is aligned to a tile group.
+        */
+@@ -170,6 +184,14 @@ pvr_rt_get_isp_region_size(struct pvr_device *device,
+    uint64_t rgn_size =
+       (uint64_t)mtile_info->tiles_per_mtile_x * mtile_info->tiles_per_mtile_y;
+ 
++   /* 1.13 GE8320 firmware wants a region header *count*, one per tile of the
++    * whole surface (not the dword size of a single macrotile group).
++    */
++   if (dev_info->ident.b == 22 && dev_info->ident.v == 87 &&
++       dev_info->ident.n == 104) {
++      return (uint64_t)mtile_info->num_tiles_x * mtile_info->num_tiles_y;
++   }
++
+    if (PVR_HAS_FEATURE(dev_info, simple_internal_parameter_format)) {
+       uint32_t version;
+ 
+@@ -374,10 +396,11 @@ static void pvr_rt_get_region_headers_stride_size(
+    rgn_headers_size *= num_tiles_y / group_size;
+    rgn_headers_size *= single_rgn_header_size;
+ 
+-   if (PVR_HAS_FEATURE(dev_info, simple_internal_parameter_format)) {
+-      rgn_headers_size =
+-         ALIGN_POT(rgn_headers_size, ROGUE_CR_TE_PSGREGION_ADDR_BASE_ALIGNMENT);
+-   }
++   /* Region headers must always be 512-bit aligned, not only for cores with
++    * the simple internal parameter format.
++    */
++   rgn_headers_size =
++      ALIGN_POT(rgn_headers_size, ROGUE_CR_TE_PSGREGION_ADDR_BASE_ALIGNMENT);
+ 
+    if (layers > 1) {
+       rgn_headers_size =
+@@ -753,8 +776,15 @@ static void pvr_geom_state_stream_init(struct pvr_render_ctx *ctx,
+          job->view_state.rt_datasets[job->view_state.view_index];
+       value.completeonterminate = job->geometry_terminate;
+ 
+-      value.region_stride = rt_dataset->rgn_headers_stride /
+-                            ROGUE_CR_TE_PSG_REGION_STRIDE_UNIT_SIZE;
++      value.region_stride =
++         DIV_ROUND_UP(rt_dataset->rgn_headers_stride,
++                      ROGUE_CR_TE_PSG_REGION_STRIDE_UNIT_SIZE);
++      {
++         const char *e = getenv("PVR13_RGN_STRIDE");
++
++         if (e)
++            value.region_stride = (uint32_t)strtoul(e, NULL, 0);
++      }
+ 
+       value.forcenewstate = PVR_HAS_QUIRK(dev_info, 52942);
+    }
+@@ -1108,7 +1138,17 @@ static void pvr_frag_state_stream_init(struct pvr_render_ctx *ctx,
+          break;
+ 
+       case ROGUE_CR_ZLS_FORMAT_TYPE_16BITINT:
+-         value.value = _mesa_float_to_unorm(depth_clear, 16);
++         /* 1.13 GE8320 wants the background-object depth value as an IEEE
++          * float even though the depth buffer is 16 bit integer; with the
++          * UNORM16 encoding the ISP rejects every fragment.
++          */
++         if (device->pdevice->dev_info.ident.b == 22 &&
++             device->pdevice->dev_info.ident.v == 87 &&
++             device->pdevice->dev_info.ident.n == 104) {
++            value.value = fui(depth_clear);
++         } else {
++            value.value = _mesa_float_to_unorm(depth_clear, 16);
++         }
+          break;
+ 
+       case ROGUE_CR_ZLS_FORMAT_TYPE_24BITINT:
+@@ -1464,6 +1504,10 @@ VkResult pvr_arch_render_job_submit(struct pvr_render_ctx *ctx,
+    struct pvr_winsys_render_submit_info submit_info;
+    struct pvr_device *device = ctx->device;
+    VkResult result;
++   uint64_t t_start = 0, t_info = 0, t_ws = 0;
++
++   if (getenv("PVR13_TIME"))
++      t_start = os_time_get_nano();
+ 
+    pvr_render_job_ws_submit_info_init(ctx,
+                                       job,
+@@ -1471,6 +1515,9 @@ VkResult pvr_arch_render_job_submit(struct pvr_render_ctx *ctx,
+                                       wait_frag,
+                                       &submit_info);
+ 
++   if (t_start)
++      t_info = os_time_get_nano();
++
+ #ifdef PVR_BUILD_ARCH_ROGUE
+    if (PVR_IS_DEBUG_SET(DUMP_CONTROL_STREAM)) {
+       /* FIXME: This isn't an ideal method of accessing the information we
+@@ -1492,6 +1539,17 @@ VkResult pvr_arch_render_job_submit(struct pvr_render_ctx *ctx,
+                                            &device->pdevice->dev_info,
+                                            signal_sync_geom,
+                                            signal_sync_frag);
++
++   if (t_start) {
++      uint64_t now = os_time_get_nano();
++
++      fprintf(stderr,
++              "pvr-time: job=%u init=%llu us ws=%llu us\n",
++              submit_info.job_num,
++              (unsigned long long)((t_info - t_start) / 1000),
++              (unsigned long long)((now - t_info) / 1000));
++   }
++
+    if (result != VK_SUCCESS)
+       return result;
+ 
+diff --git a/src/imagination/vulkan/pvr_arch_queue.c b/src/imagination/vulkan/pvr_arch_queue.c
+index cb6203e..5c96fec 100644
+--- a/src/imagination/vulkan/pvr_arch_queue.c
++++ b/src/imagination/vulkan/pvr_arch_queue.c
+@@ -1057,11 +1057,24 @@ static VkResult pvr_driver_queue_submit(struct vk_queue *queue,
+    struct pvr_queue *driver_queue = container_of(queue, struct pvr_queue, vk);
+    struct pvr_device *device = driver_queue->device;
+    VkResult result;
++   struct timespec q0, q1, q2, q3, q4;
++   const bool timing = getenv("PVR13_TIME") != NULL;
++
++#define QSTAMP(ts) clock_gettime(CLOCK_MONOTONIC, &(ts))
++#define QDELTA(a, b)                                                       \
++   (1000ULL * (uint64_t)((b).tv_sec - (a).tv_sec) +                        \
++    (uint64_t)((b).tv_nsec - (a).tv_nsec) / 1000ULL)
++
++   if (timing)
++      QSTAMP(q0);
+ 
+    result = pvr_clear_last_submits_syncs(driver_queue);
+    if (result != VK_SUCCESS)
+       return result;
+ 
++   if (timing)
++      QSTAMP(q1);
++
+    if (submit->wait_count) {
+       result = pvr_process_queue_waits(driver_queue,
+                                        submit->waits,
+@@ -1070,6 +1083,9 @@ static VkResult pvr_driver_queue_submit(struct vk_queue *queue,
+          return result;
+    }
+ 
++   if (timing)
++      QSTAMP(q2);
++
+    struct pvr_suspended_data suspended_data = {0};
+ 
+    for (uint32_t i = 0U; i < submit->command_buffer_count; i++) {
+@@ -1082,11 +1098,25 @@ static VkResult pvr_driver_queue_submit(struct vk_queue *queue,
+          return result;
+    }
+ 
++   if (timing)
++      QSTAMP(q3);
++
+    assert(suspended_data.rts == NULL && "suspended graphics job never resumed");
+ 
+    result = pvr_process_queue_signals(driver_queue,
+                                       submit->signals,
+                                       submit->signal_count);
++
++   if (timing) {
++      QSTAMP(q4);
++      fprintf(stderr,
++              "pvr-q: clear=%llu us waits=%llu us cmds=%llu us sig=%llu us\n",
++              (unsigned long long)QDELTA(q0, q1),
++              (unsigned long long)QDELTA(q1, q2),
++              (unsigned long long)QDELTA(q2, q3),
++              (unsigned long long)QDELTA(q3, q4));
++   }
++
+    if (result != VK_SUCCESS)
+       return result;
+ 
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/fw-api/pvr_rogue_fwif_shared.h b/src/imagination/vulkan/winsys/pvrsrvkm/fw-api/pvr_rogue_fwif_shared.h
+index d74d109..9ff0a6b 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/fw-api/pvr_rogue_fwif_shared.h
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/fw-api/pvr_rogue_fwif_shared.h
+@@ -35,7 +35,7 @@
+ #define ROGUE_FWIF_NUM_RTDATA_FREELISTS 2U
+ #define ROGUE_NUM_GEOM_CORES 1U
+ 
+-#define ROGUE_NUM_GEOM_CORES_SIZE 2U
++#define ROGUE_NUM_GEOM_CORES_SIZE 1U
+ 
+ /**
+  * Maximum number of UFOs in a CCB command.
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_arch_srv_job_render.c b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_arch_srv_job_render.c
+index 2b9bd0e..7eb96e1 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_arch_srv_job_render.c
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_arch_srv_job_render.c
+@@ -242,6 +242,10 @@ struct pvr_rogue_cr_te {
+    uint32_t mtile_stride;
+ };
+ 
++#define PVR_DEVICE_IS_GE8320_113(dev_info)          \
++   ((dev_info)->ident.b == 22 && (dev_info)->ident.v == 87 && \
++    (dev_info)->ident.n == 104)
++
+ static void pvr_rogue_ct_te_init(const struct pvr_device_info *dev_info,
+                                  const struct pvr_rt_mtile_info *mtile_info,
+                                  uint32_t samples,
+@@ -365,6 +369,26 @@ VkResult PVR_PER_ARCH(srv_render_target_dataset_create)(
+                         create_info->samples,
+                         &rogue_te_regs);
+ 
++   /* 1.13 GE8320 firmware expects uiRgnHeaderSize as a region header count;
++    * pvr_rt_get_isp_region_size() already returns that for this device.
++    */
++   uint32_t rgn_header_size = create_info->rgn_header_size;
++
++   if (getenv("PVR13_DUMP_RT")) {
++      fprintf(stderr,
++              "pvr-rt: %ux%u rgn=%llu isp_mtile=%08x te_screen=%08x "
++              "mt1=%08x mt2=%08x stride=%u mtile_stride=%u tpc=%llu "
++              "tpc_stride=%llu align=%u\n",
++              create_info->width, create_info->height,
++              (unsigned long long)rgn_header_size, isp_mtile_size,
++              rogue_te_regs.screen, rogue_te_regs.mtile1, rogue_te_regs.mtile2,
++              rogue_te_regs.mtile_stride,
++              create_info->tpc_stride,
++              (unsigned long long)create_info->tpc_size,
++              (unsigned long long)create_info->tpc_stride,
++              create_info->samples);
++   }
++
+    result = pvr_srv_rgx_create_hwrt_dataset(
+       ws->render_fd,
+       pvr_rogue_get_cr_multisamplectl_val(create_info->samples, true),
+@@ -385,7 +409,7 @@ VkResult PVR_PER_ARCH(srv_render_target_dataset_create)(
+       isp_mtile_size,
+       rogue_te_regs.mtile_stride,
+       pvr_rogue_get_ppp_screen_val(create_info->width, create_info->height),
+-      create_info->rgn_header_size,
++      rgn_header_size,
+       rogue_te_regs.aa,
+       rogue_te_regs.mtile1,
+       rogue_te_regs.mtile2,
+@@ -757,6 +781,107 @@ static void srv_fragment_cmd_init(struct rogue_fwif_cmd_3d *cmd,
+       cmd->flags |= ROGUE_FWIF_RENDERFLAGS_DISABLE_PIXELMERGE;
+ }
+ 
++/* 1.13 firmware command layouts.  Sizes captured from the vendor KM dump:
++ * CMDTA 80 bytes, CMD3D 320 bytes.  Field offsets were derived by diffing
++ * vendor GLES clear/draw goldens against the Mesa register stream.
++ */
++#define PVR_CMDTA_113_SIZE 80
++#define PVR_CMD3D_113_SIZE 320
++
++static inline void pvr_put_u32(uint8_t *dst, uint32_t v)
++{
++   memcpy(dst, &v, sizeof(v));
++}
++
++static inline void pvr_put_u64(uint8_t *dst, uint64_t v)
++{
++   memcpy(dst, &v, sizeof(v));
++}
++
++static void pvr_pack_cmd_ta_113(uint8_t dst[PVR_CMDTA_113_SIZE],
++                                const struct rogue_fwif_cmd_ta *src)
++{
++   const struct rogue_fwif_ta_regs *r = &src->regs;
++
++   memset(dst, 0, PVR_CMDTA_113_SIZE);
++
++   pvr_put_u64(dst + 0x10, r->vdm_ctrl_stream_base);
++   pvr_put_u64(dst + 0x18, r->tpu_border_colour_table);
++   pvr_put_u32(dst + 0x20, r->ppp_ctrl);
++   pvr_put_u32(dst + 0x24, r->te_psg);
++   pvr_put_u32(dst + 0x28, r->tpu);
++   pvr_put_u32(dst + 0x2c, r->view_idx);
++   /* The vendor golden programs PDS_CTRL to 0x9300 here; Mesa leaves its
++    * pds_ctrl stream field at zero, so use the known-good value.
++    */
++   pvr_put_u32(dst + 0x30, 0x9300);
++   pvr_put_u32(dst + 0x34, 0);
++   pvr_put_u32(dst + 0x38, src->flags);
++   pvr_put_u32(dst + 0x3c, 0);
++   pvr_put_u32(dst + 0x40, 0);
++   /* 1.13 stores the 32-bit UFO address at 0x44, value at 0x48. */
++   pvr_put_u32(dst + 0x44,
++               (uint32_t)src->partial_render_ta_3d_fence.ufo_addr.addr);
++   pvr_put_u32(dst + 0x48, src->partial_render_ta_3d_fence.value);
++   pvr_put_u32(dst + 0x4c, 0);
++}
++
++static void pvr_pack_cmd_3d_113(uint8_t dst[PVR_CMD3D_113_SIZE],
++                                const struct rogue_fwif_cmd_3d *src)
++{
++   const struct rogue_fwif_3d_regs *r = &src->regs;
++
++   memset(dst, 0, PVR_CMD3D_113_SIZE);
++
++   pvr_put_u32(dst + 0x10, r->usc_pixel_output_ctrl);
++   memcpy(dst + 0x14, r->usc_clear_register, 4 * sizeof(uint32_t));
++   pvr_put_u32(dst + 0x24, r->isp_bgobjdepth);
++   pvr_put_u32(dst + 0x28, r->isp_bgobjvals);
++   pvr_put_u32(dst + 0x2c, r->isp_aa);
++   pvr_put_u32(dst + 0x30, r->isp_ctl);
++   pvr_put_u32(dst + 0x34, r->tpu);
++   pvr_put_u32(dst + 0x38, r->event_pixel_pds_info);
++   pvr_put_u32(dst + 0x3c, r->view_idx);
++
++   pvr_put_u64(dst + 0x40, r->event_pixel_pds_data);
++   pvr_put_u64(dst + 0x48, r->isp_scissor_base);
++   pvr_put_u64(dst + 0x50, r->isp_dbias_base);
++   pvr_put_u64(dst + 0x58, r->isp_oclqry_base);
++   pvr_put_u64(dst + 0x60, r->isp_zlsctl);
++   pvr_put_u64(dst + 0x68, r->isp_zload_store_base);
++   pvr_put_u64(dst + 0x70, r->isp_stencil_load_store_base);
++
++   /* 1.13 keeps the PBE state compact; MRT0 covers the current test. */
++   memcpy(dst + 0x78, &r->pbe_word[0][0], 3 * sizeof(uint64_t));
++
++   pvr_put_u64(dst + 0xf8, r->tpu_border_colour_table);
++   memcpy(dst + 0x100, r->pds_bgnd, sizeof(r->pds_bgnd));
++   memcpy(dst + 0x118, r->pds_pr_bgnd, sizeof(r->pds_pr_bgnd));
++
++   pvr_put_u32(dst + 0x130, src->flags);
++
++   {
++      const char *e;
++      if ((e = getenv("PVR13_ISPCTL")))
++         pvr_put_u32(dst + 0x30, (uint32_t)strtoul(e, NULL, 0));
++      if ((e = getenv("PVR13_BGobjVALS")))
++         pvr_put_u32(dst + 0x28, (uint32_t)strtoul(e, NULL, 0));
++      if (getenv("PVR13_3D_FLAGS0"))
++         pvr_put_u32(dst + 0x130, 0);
++      if ((e = getenv("PVR13_BGOBJDEPTH")))
++         pvr_put_u32(dst + 0x24, (uint32_t)strtoul(e, NULL, 0));
++      if ((e = getenv("PVR13_ZLSCTL")))
++         pvr_put_u64(dst + 0x60, strtoull(e, NULL, 0));
++      if ((e = getenv("PVR13_ZLSSTRIDE")))
++         pvr_put_u32(dst + 0x134, (uint32_t)strtoul(e, NULL, 0));
++      if ((e = getenv("PVR13_SLSSTRIDE")))
++         pvr_put_u32(dst + 0x138, (uint32_t)strtoul(e, NULL, 0));
++   }
++   pvr_put_u32(dst + 0x134, src->zls_stride);
++   pvr_put_u32(dst + 0x138, src->sls_stride);
++   pvr_put_u32(dst + 0x13c, src->execute_count);
++}
++
+ VkResult PVR_PER_ARCH(srv_winsys_render_submit)(
+    const struct pvr_winsys_render_ctx *ctx,
+    const struct pvr_winsys_render_submit_info *submit_info,
+@@ -781,6 +906,9 @@ VkResult PVR_PER_ARCH(srv_winsys_render_submit)(
+    struct rogue_fwif_cmd_3d frag_cmd = { 0 };
+    struct rogue_fwif_cmd_3d pr_cmd = { 0 };
+ 
++   uint8_t geom_113[PVR_CMDTA_113_SIZE];
++   uint8_t frag_113[PVR_CMD3D_113_SIZE];
++
+    uint8_t *frag_cmd_ptr = NULL;
+    uint32_t frag_cmd_size = 0;
+ 
+@@ -804,14 +932,18 @@ VkResult PVR_PER_ARCH(srv_winsys_render_submit)(
+                          dev_info,
+                          submit_info->frame_num);
+ 
++   pvr_pack_cmd_ta_113(geom_113, &geom_cmd);
++
+    if (submit_info->has_fragment_job) {
+       srv_fragment_cmd_init(&frag_cmd,
+                             &submit_info->fragment,
+                             dev_info,
+                             submit_info->frame_num);
+ 
+-      frag_cmd_ptr = (uint8_t *)&frag_cmd;
+-      frag_cmd_size = sizeof(frag_cmd);
++      pvr_pack_cmd_3d_113(frag_113, &frag_cmd);
++
++      frag_cmd_ptr = frag_113;
++      frag_cmd_size = sizeof(frag_113);
+    }
+ 
+    if (submit_info->geometry.wait) {
+@@ -889,10 +1021,13 @@ VkResult PVR_PER_ARCH(srv_winsys_render_submit)(
+                                         srv_ctx->timeline_frag,
+                                         &fence_frag,
+                                         "FRAG",
+-                                        sizeof(geom_cmd),
+-                                        (uint8_t *)&geom_cmd,
+-                                        sizeof(pr_cmd),
+-                                        (uint8_t *)&pr_cmd,
++                                        sizeof(geom_113),
++                                        geom_113,
++                                        /* 1.13: let the KM combine PR and 3D
++                                         * (vendor passes no PR payload).
++                                         */
++                                        0,
++                                        NULL,
+                                         frag_cmd_size,
+                                         frag_cmd_ptr,
+                                         submit_info->job_num,
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_arch_srv_job_transfer.c b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_arch_srv_job_transfer.c
+index ced9548..8126456 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_arch_srv_job_transfer.c
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_arch_srv_job_transfer.c
+@@ -121,6 +121,35 @@ srv_transfer_cmd_stream_load(struct rogue_fwif_cmd_transfer *const cmd,
+    assert((const uint8_t *)stream_ptr - stream == main_stream_len);
+ }
+ 
++#define PVR_CMDTRANSFER_113_SIZE 152
++
++static void pvr_pack_cmd_transfer_113(uint8_t dst[PVR_CMDTRANSFER_113_SIZE],
++                                      const struct rogue_fwif_cmd_transfer *src)
++{
++   memset(dst, 0, PVR_CMDTRANSFER_113_SIZE);
++
++   /* 0x00..0x27: bgobjvals .. isp_xtp_pipe_enable (10 u32). */
++   memcpy(dst + 0x00, &src->regs, 0x28);
++
++   /* 0x28..0x3b: 1.13 has no isp_aa, so pds info/code/data and
++    * isp_render/isp_rgn move up one slot. */
++   memcpy(dst + 0x28, &src->regs.event_pixel_pds_info, 4);
++   memcpy(dst + 0x2c, &src->regs.event_pixel_pds_code, 4);
++   memcpy(dst + 0x30, &src->regs.event_pixel_pds_data, 4);
++   memcpy(dst + 0x34, &src->regs.isp_render, 4);
++   memcpy(dst + 0x38, &src->regs.isp_rgn, 4);
++
++   /* 0x40..0x5f: pds_bgnd0/1/3 + isp_mtile_base. */
++   memcpy(dst + 0x40, &src->regs.pds_bgnd0_base, 24);
++   memcpy(dst + 0x58, &src->regs.isp_mtile_base, 8);
++
++   /* 0x60..0x8f: pbe_wordx_mrty for 2 RTs. */
++   memcpy(dst + 0x60, &src->regs.pbe_wordx_mrty[0], 48);
++
++   /* 0x90: flags. */
++   memcpy(dst + 0x90, &src->flags, 4);
++}
++
+ static void pvr_srv_transfer_cmds_init(
+    const struct pvr_winsys_transfer_submit_info *submit_info,
+    struct rogue_fwif_cmd_transfer *cmds,
+@@ -155,14 +184,15 @@ VkResult PVR_PER_ARCH(srv_winsys_transfer_submit)(
+       to_pvr_srv_winsys_transfer_ctx(ctx);
+    const struct pvr_srv_winsys *srv_ws = to_pvr_srv_winsys(ctx->ws);
+ 
+-   struct rogue_fwif_cmd_transfer
+-      *cmds_ptr_arr[PVR_TRANSFER_MAX_PREPARES_PER_SUBMIT];
++   uint8_t *cmds_ptr_arr[PVR_TRANSFER_MAX_PREPARES_PER_SUBMIT];
+    uint32_t *update_sync_offsets[PVR_TRANSFER_MAX_PREPARES_PER_SUBMIT] = { 0 };
+    uint32_t client_update_count[PVR_TRANSFER_MAX_PREPARES_PER_SUBMIT] = { 0 };
+    void **update_ufo_syc_prims[PVR_TRANSFER_MAX_PREPARES_PER_SUBMIT] = { 0 };
+    uint32_t *update_values[PVR_TRANSFER_MAX_PREPARES_PER_SUBMIT] = { 0 };
+    uint32_t cmd_flags[PVR_TRANSFER_MAX_PREPARES_PER_SUBMIT] = { 0 };
+    uint32_t cmd_sizes[PVR_TRANSFER_MAX_PREPARES_PER_SUBMIT];
++   uint8_t transfer_113[PVR_TRANSFER_MAX_PREPARES_PER_SUBMIT]
++                       [PVR_CMDTRANSFER_113_SIZE];
+ 
+    struct pvr_srv_sync *srv_signal_sync;
+    uint32_t job_num;
+@@ -182,8 +212,9 @@ VkResult PVR_PER_ARCH(srv_winsys_transfer_submit)(
+                               dev_info);
+ 
+    for (uint32_t i = 0U; i < submit_info->cmd_count; i++) {
+-      cmd_sizes[i] = sizeof(**cmds_ptr_arr);
+-      cmds_ptr_arr[i] = &transfer_cmds[i];
++      pvr_pack_cmd_transfer_113(transfer_113[i], &transfer_cmds[i]);
++      cmd_sizes[i] = PVR_CMDTRANSFER_113_SIZE;
++      cmds_ptr_arr[i] = transfer_113[i];
+    }
+ 
+    if (submit_info->wait) {
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv.c b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv.c
+index 341f07e..cfdc273 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv.c
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv.c
+@@ -233,6 +233,17 @@ static VkResult pvr_srv_memctx_init(struct pvr_srv_winsys *srv_ws)
+    os_get_page_size(&srv_ws->base.page_size);
+    srv_ws->base.log2_page_size = util_logbase2(srv_ws->base.page_size);
+ 
++   /* Experimental: bigger GPU pages to cut TLB misses. */
++   if (getenv("PVR13_PAGE_LOG2")) {
++      uint32_t log2 = (uint32_t)atoi(getenv("PVR13_PAGE_LOG2"));
++
++      if (log2 >= 12 && log2 <= 20) {
++         srv_ws->base.log2_page_size = log2;
++         srv_ws->base.page_size = 1U << log2;
++         fprintf(stderr, "pvr-page: log2_page_size=%u\n", log2);
++      }
++   }
++
+    result = pvr_srv_get_heap_count(srv_ws->base.render_fd, &heap_count);
+    if (result != VK_SUCCESS)
+       goto err_pvr_srv_int_ctx_destroy;
+@@ -240,14 +251,25 @@ static VkResult pvr_srv_memctx_init(struct pvr_srv_winsys *srv_ws)
+    assert(heap_count > 0);
+ 
+    for (uint32_t i = 0; i < heap_count; i++) {
++      pvr_dev_addr_t dump_base;
++      uint64_t dump_size = 0, dump_carveout = 0;
++      uint32_t dump_log2 = 0;
++
+       result = pvr_srv_get_heap_details(srv_ws->base.render_fd,
+                                         i,
+                                         sizeof(heap_name),
+                                         heap_name,
+-                                        NULL,
+-                                        NULL,
+-                                        NULL,
+-                                        NULL);
++                                        &dump_base,
++                                        &dump_size,
++                                        &dump_carveout,
++                                        &dump_log2);
++      if (getenv("PVR13_HEAPS")) {
++         fprintf(stderr,
++                 "pvr-heap[%u]: name=%s base=0x%llx size=0x%llx pages=0x%x log2=%u\n",
++                 i, heap_name, (unsigned long long)dump_base.addr,
++                 (unsigned long long)dump_size,
++                 (unsigned)(1U << dump_log2), dump_log2);
++      }
+       if (result != VK_SUCCESS)
+          goto err_pvr_srv_int_ctx_destroy;
+ 
+@@ -257,8 +279,15 @@ static VkResult pvr_srv_memctx_init(struct pvr_srv_winsys *srv_ws)
+                (name2),                                   \
+                sizeof((name2))) == 0)
+ 
+-      if (pvr_srv_heap_needs_init(general_heap_idx, heap_name,
+-                                  PVR_SRV_GENERAL_HEAP_IDENT)) {
++      if (getenv("PVR13_NON4K") && general_heap_idx == -1 &&
++          strncmp(heap_name, "General NON-4K",
++                  sizeof("General NON-4K")) == 0) {
++         general_heap_idx = i;
++         fprintf(stderr, "pvr-heap: using '%s' (idx %u) as general heap\n",
++                 heap_name, i);
++
++      } else if (pvr_srv_heap_needs_init(general_heap_idx, heap_name,
++                                         PVR_SRV_GENERAL_HEAP_IDENT)) {
+          general_heap_idx = i;
+ 
+       } else if (pvr_srv_heap_needs_init(pds_heap_idx, heap_name,
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv.h b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv.h
+index f57aa39..beab4f6 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv.h
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv.h
+@@ -48,7 +48,7 @@
+ #define PVR_SRV_RGNHDR_BRN_63142_HEAP_IDENT "RgnHdr BRN63142"
+ #define PVR_SRV_TRANSFER_3D_HEAP_IDENT "TQ3DParameters"
+ #define PVR_SRV_USCCODE_HEAP_IDENT "USC Code"
+-#define PVR_SRV_VISIBILITY_TEST_HEAP_IDENT "Visibility Test"
++#define PVR_SRV_VISIBILITY_TEST_HEAP_IDENT "VisTest"
+ 
+ #define FWIF_PDS_HEAP_TOTAL_BYTES 4096
+ #define FWIF_PDS_HEAP_VDM_SYNC_OFFSET_BYTES 0
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_bridge.c b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_bridge.c
+index 5dde6f5..977f96d 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_bridge.c
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_bridge.c
+@@ -25,10 +25,13 @@
+ #include <errno.h>
+ #include <stdbool.h>
+ #include <stdint.h>
++#include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <sys/ioctl.h>
+ #include <xf86drm.h>
+ 
++#include "fw-api/pvr_rogue_fwif.h"
+ #include "fw-api/pvr_rogue_fwif_shared.h"
+ #include "pvr_macros.h"
+ #include "pvr_srv.h"
+@@ -46,6 +49,172 @@
+              (bridge_ret).error,                        \
+              strerror(errno))
+ 
++static bool pvr_dump_cmd_enabled(void)
++{
++   static int enabled = -1;
++
++   if (enabled < 0) {
++      const char *s = getenv("PVR_DUMP_CMD");
++
++      enabled = s && s[0] && s[0] != '0';
++   }
++
++   return enabled;
++}
++
++static void pvr_offsets_once(void)
++{
++   static bool done;
++
++   if (done)
++      return;
++   done = true;
++
++   fprintf(stderr,
++           "pvr-off cmd3d=%zu shared=%zu regs=%zu flags=%zu zls=%zu sls=%zu exec=%zu\n",
++           sizeof(struct rogue_fwif_cmd_3d),
++           offsetof(struct rogue_fwif_cmd_3d, cmd_shared),
++           offsetof(struct rogue_fwif_cmd_3d, regs),
++           offsetof(struct rogue_fwif_cmd_3d, flags),
++           offsetof(struct rogue_fwif_cmd_3d, zls_stride),
++           offsetof(struct rogue_fwif_cmd_3d, sls_stride),
++           offsetof(struct rogue_fwif_cmd_3d, execute_count));
++   fprintf(stderr,
++           "pvr-off 3dregs=%zu usc_out=%zu usc_clear=%zu bgdepth=%zu bgvals=%zu "
++           "aa=%zu xtp=%zu ctl=%zu tpu=%zu pdsinfo=%zu phantom=%zu view=%zu\n",
++           sizeof(struct rogue_fwif_3d_regs),
++           offsetof(struct rogue_fwif_3d_regs, usc_pixel_output_ctrl),
++           offsetof(struct rogue_fwif_3d_regs, usc_clear_register),
++           offsetof(struct rogue_fwif_3d_regs, isp_bgobjdepth),
++           offsetof(struct rogue_fwif_3d_regs, isp_bgobjvals),
++           offsetof(struct rogue_fwif_3d_regs, isp_aa),
++           offsetof(struct rogue_fwif_3d_regs, isp_xtp_pipe_enable),
++           offsetof(struct rogue_fwif_3d_regs, isp_ctl),
++           offsetof(struct rogue_fwif_3d_regs, tpu),
++           offsetof(struct rogue_fwif_3d_regs, event_pixel_pds_info),
++           offsetof(struct rogue_fwif_3d_regs, pixel_phantom),
++           offsetof(struct rogue_fwif_3d_regs, view_idx));
++   fprintf(stderr, "pvr-off cmdta=%zu taregs=%zu taflags=%zu\n",
++           sizeof(struct rogue_fwif_cmd_ta),
++           offsetof(struct rogue_fwif_cmd_ta, regs),
++           offsetof(struct rogue_fwif_cmd_ta, flags));
++   fprintf(stderr, "pvr-off cmdtr=%zu trregs=%zu trflags=%zu\n",
++           sizeof(struct rogue_fwif_cmd_transfer),
++           offsetof(struct rogue_fwif_cmd_transfer, regs),
++           offsetof(struct rogue_fwif_cmd_transfer, flags));
++}
++
++static void pvr_dump_cmd(const char *tag, const void *data, uint32_t size)
++{
++   const uint8_t *b = data;
++
++   if (!data || !size || !pvr_dump_cmd_enabled())
++      return;
++
++   pvr_offsets_once();
++
++   if (!strcmp(tag, "3D") && size >= 16) {
++      const struct rogue_fwif_cmd_3d *c = data;
++      const struct rogue_fwif_3d_regs *r = &c->regs;
++
++      fprintf(stderr,
++              "pvr-3d usc_out=%08x clear=%08x,%08x,%08x,%08x bgdepth=%08x "
++              "bgvals=%08x aa=%08x xtp=%08x ctl=%08x tpu=%08x pdsinfo=%08x "
++              "phantom=%08x view=%08x\n",
++              r->usc_pixel_output_ctrl,
++              r->usc_clear_register[0], r->usc_clear_register[1],
++              r->usc_clear_register[2], r->usc_clear_register[3],
++              r->isp_bgobjdepth, r->isp_bgobjvals, r->isp_aa,
++              r->isp_xtp_pipe_enable, r->isp_ctl, r->tpu,
++              r->event_pixel_pds_info, r->pixel_phantom, r->view_idx);
++      fprintf(stderr,
++              "pvr-3d scissor=%llx dbias=%llx oclq=%llx zlsctl=%llx "
++              "zload=%llx sten=%llx fbcdc=%llx tpub=%llx\n",
++              (unsigned long long)r->isp_scissor_base,
++              (unsigned long long)r->isp_dbias_base,
++              (unsigned long long)r->isp_oclqry_base,
++              (unsigned long long)r->isp_zlsctl,
++              (unsigned long long)r->isp_zload_store_base,
++              (unsigned long long)r->isp_stencil_load_store_base,
++              (unsigned long long)r->fb_cdc_zls,
++              (unsigned long long)r->tpu_border_colour_table);
++      fprintf(stderr,
++              "pvr-3d pdsbgnd=%llx,%llx,%llx pbe0=%llx,%llx,%llx "
++              "flags=%08x zls=%08x sls=%08x exec=%08x\n",
++              (unsigned long long)r->pds_bgnd[0],
++              (unsigned long long)r->pds_bgnd[1],
++              (unsigned long long)r->pds_bgnd[2],
++              (unsigned long long)r->pbe_word[0][0],
++              (unsigned long long)r->pbe_word[0][1],
++              (unsigned long long)r->pbe_word[0][2],
++              c->flags, c->zls_stride, c->sls_stride, c->execute_count);
++   }
++
++   if (!strcmp(tag, "TA") && size >= sizeof(struct rogue_fwif_cmd_ta)) {
++      const struct rogue_fwif_cmd_ta *c = data;
++      const struct rogue_fwif_ta_regs *r = &c->regs;
++
++      fprintf(stderr,
++              "pvr-ta vdm=%llx tpub=%llx ppp=%08x te_psg=%08x tpu=%08x "
++              "resume0=%08x resume3=%08x pds_ctrl=%08x view=%08x coeff=%08x "
++              "flags=%08x fence=%llx:%08x\n",
++              (unsigned long long)r->vdm_ctrl_stream_base,
++              (unsigned long long)r->tpu_border_colour_table,
++              r->ppp_ctrl, r->te_psg, r->tpu,
++              r->vdm_context_resume_task0_size,
++              r->vdm_context_resume_task3_size,
++              r->pds_ctrl, r->view_idx, r->pds_coeff_free_prog,
++              c->flags,
++              (unsigned long long)c->partial_render_ta_3d_fence.ufo_addr.addr,
++              c->partial_render_ta_3d_fence.value);
++   }
++
++   if (!strcmp(tag, "3D") && size >= 16) {
++      const struct rogue_fwif_cmd_3d *c = data;
++      const struct rogue_fwif_3d_regs *r = &c->regs;
++
++      fprintf(stderr,
++              "pvr-3d usc_out=%08x clear=%08x,%08x,%08x,%08x bgdepth=%08x "
++              "bgvals=%08x aa=%08x xtp=%08x ctl=%08x tpu=%08x pdsinfo=%08x "
++              "pdsdata=%08x view=%08x\n",
++              r->usc_pixel_output_ctrl,
++              r->usc_clear_register[0], r->usc_clear_register[1],
++              r->usc_clear_register[2], r->usc_clear_register[3],
++              r->isp_bgobjdepth, r->isp_bgobjvals, r->isp_aa,
++              r->isp_xtp_pipe_enable, r->isp_ctl, r->tpu,
++              r->event_pixel_pds_info, r->event_pixel_pds_data, r->view_idx);
++      fprintf(stderr,
++              "pvr-3d scissor=%llx dbias=%llx oclq=%llx zlsctl=%llx "
++              "zload=%llx sten=%llx fbcdc=%llx tpub=%llx\n",
++              (unsigned long long)r->isp_scissor_base,
++              (unsigned long long)r->isp_dbias_base,
++              (unsigned long long)r->isp_oclqry_base,
++              (unsigned long long)r->isp_zlsctl,
++              (unsigned long long)r->isp_zload_store_base,
++              (unsigned long long)r->isp_stencil_load_store_base,
++              (unsigned long long)r->fb_cdc_zls,
++              (unsigned long long)r->tpu_border_colour_table);
++      fprintf(stderr,
++              "pvr-3d pdsbgnd=%llx,%llx,%llx prbgnd=%llx,%llx,%llx "
++              "flags=%08x zls=%08x sls=%08x exec=%08x\n",
++              (unsigned long long)r->pds_bgnd[0],
++              (unsigned long long)r->pds_bgnd[1],
++              (unsigned long long)r->pds_bgnd[2],
++              (unsigned long long)r->pds_pr_bgnd[0],
++              (unsigned long long)r->pds_pr_bgnd[1],
++              (unsigned long long)r->pds_pr_bgnd[2],
++              c->flags, c->zls_stride, c->sls_stride, c->execute_count);
++   }
++
++   for (uint32_t off = 0; off < size; off += 16) {
++      fprintf(stderr, "pvr-cmd-%s %04x:", tag, off);
++      for (uint32_t i = 0; i < 16 && off + i < size; i++)
++         fprintf(stderr, " %02x", b[off + i]);
++      fprintf(stderr, "\n");
++   }
++   fprintf(stderr, "pvr-cmd-%s size=%u\n", tag, size);
++}
++
+ static int pvr_srv_bridge_call(int fd,
+                                uint8_t bridge_id,
+                                uint32_t function_id,
+@@ -74,16 +243,9 @@ static int pvr_srv_bridge_call(int fd,
+ 
+ VkResult pvr_srv_init_module(int fd, enum pvr_srvkm_module_type module)
+ {
+-   struct drm_srvkm_init_data init_data = { .init_module = module };
+-
+-   int ret = drmIoctl(fd, DRM_IOCTL_SRVKM_INIT, &init_data);
+-   if (unlikely(ret)) {
+-      return vk_errorf(NULL,
+-                       VK_ERROR_INITIALIZATION_FAILED,
+-                       "DRM_IOCTL_SRVKM_INIT failed, Errno: %s",
+-                       strerror(errno));
+-   }
+-
++   /* DDK 1.13 render node is already initialized for services; no SRVKM_INIT ioctl. */
++   (void)fd;
++   (void)module;
+    return VK_SUCCESS;
+ }
+ 
+@@ -908,7 +1070,6 @@ VkResult pvr_srv_rgx_create_transfer_context(int fd,
+                                              void **const transfer_context_out)
+ {
+    struct pvr_srv_rgx_create_transfer_context_cmd cmd = {
+-      .robustness_address = robustness_address,
+       .priority = priority,
+       .reset_framework_cmd_size = reset_framework_cmd_size,
+       .reset_framework_cmd = reset_framework_cmd,
+@@ -998,20 +1159,17 @@ VkResult pvr_srv_rgx_submit_transfer2(int fd,
+       .transfer_context = transfer_context,
+       .client_update_count = client_update_count,
+       .cmd_size = cmd_size,
+-      .sync_pmr_flags = sync_pmr_flags,
+       .tq_prepare_flags = tq_prepare_flags,
+       .update_sync_offset = update_sync_offset,
+       .update_value = update_value,
+       .fw_command = fw_command,
+       .update_fence_name = update_fence_name,
+-      .sync_pmrs = sync_pmrs,
+       .update_ufo_sync_prim_block = update_ufo_sync_prim_block,
+       .update_timeline_2d = update_timeline_2d,
+       .update_timeline_3d = update_timeline_3d,
+       .check_fence = check_fence,
+       .ext_job_ref = ext_job_ref,
+       .prepare_count = prepare_count,
+-      .sync_pmr_count = sync_pmr_count,
+    };
+ 
+    struct pvr_srv_rgx_submit_transfer2_ret ret = {
+@@ -1020,6 +1178,8 @@ VkResult pvr_srv_rgx_submit_transfer2(int fd,
+ 
+    int result;
+ 
++   for (uint32_t dmp_i = 0; dmp_i < prepare_count; dmp_i++)
++      pvr_dump_cmd("TQ", (const uint8_t *)fw_command, cmd_size[dmp_i]);
+    result = pvr_srv_bridge_call(fd,
+                                 PVR_SRV_BRIDGE_RGXTQ,
+                                 PVR_SRV_BRIDGE_RGXTQ_RGXSUBMITTRANSFER2,
+@@ -1069,7 +1229,6 @@ pvr_srv_rgx_create_compute_context(int fd,
+       .static_compute_context_state = static_compute_context_state,
+       .packed_ccb_size = packed_ccb_size,
+       .context_flags = context_flags,
+-      .robustness_address = robustness_address,
+       .max_deadline_ms = max_deadline_ms,
+    };
+ 
+@@ -1149,11 +1308,9 @@ VkResult pvr_srv_rgx_kick_compute2(int fd,
+       .compute_context = compute_context,
+       .client_update_offset = client_update_offset,
+       .client_update_value = client_update_value,
+-      .sync_pmr_flags = sync_pmr_flags,
+       .cdm_cmd = cdm_cmd,
+       .update_fence_name = update_fence_name,
+       .client_update_ufo_sync_prim_block = client_update_ufo_sync_prim_block,
+-      .sync_pmrs = sync_pmrs,
+       .check_fence = check_fence,
+       .update_timeline = update_timeline,
+       .client_update_count = client_update_count,
+@@ -1162,7 +1319,6 @@ VkResult pvr_srv_rgx_kick_compute2(int fd,
+       .num_work_groups = num_work_groups,
+       .num_work_items = num_work_items,
+       .pdump_flags = pdump_flags,
+-      .sync_pmr_count = sync_pmr_count,
+    };
+ 
+    struct pvr_srv_rgx_kick_cdm2_ret ret = {
+@@ -1228,32 +1384,34 @@ pvr_srv_rgx_create_hwrt_dataset(int fd,
+     * going to use it since it's the same.
+     */
+    struct pvr_srv_rgx_create_hwrt_dataset_cmd cmd = {
+-      .flipped_multi_sample_ctl = flipped_multi_sample_ctl,
+-      .multi_sample_ctl = multi_sample_ctl,
+-      .macrotile_array_dev_addrs = macrotile_array_dev_addrs,
+-      .pm_mlist_dev_addrs = pm_mlist_dev_addrs,
+-      .rtc_dev_addrs = rtc_dev_addrs,
+-      .rgn_header_dev_addrs = rgn_header_dev_addrs,
+-      .tail_ptrs_dev_addrs = tail_ptrs_dev_addrs,
+-      .vheap_table_dev_adds = vheap_table_dev_adds,
+-      .hwrt_dataset = hwrt_dataset_out,
++      .vheap_table_dev_addr = vheap_table_dev_adds[0],
++      .pm_mlist_dev_addr0 = pm_mlist_dev_addrs[0],
++      .pm_mlist_dev_addr1 = pm_mlist_dev_addrs[1],
+       .free_lists = free_lists,
++      .ppp_screen = ppp_screen,
++      .multi_sample_ctl = multi_sample_ctl,
++      .flipped_multi_sample_ctl = flipped_multi_sample_ctl,
++      .tpc_stride = tpc_stride,
++      .tail_ptrs_dev_addr = tail_ptrs_dev_addrs[0],
++      .tpc_size = tpc_size,
++      .te_screen = te_screen,
++      .te_aa = te_aa,
++      .te_mtile1 = te_mtile1,
++      .te_mtile2 = te_mtile2,
++      .mtile_stride = mtile_stride,
+       .isp_merge_lower_x = isp_merge_lower_x,
+       .isp_merge_lower_y = isp_merge_lower_y,
+-      .isp_merge_scale_x = isp_merge_scale_x,
+-      .isp_merge_scale_y = isp_merge_scale_y,
+       .isp_merge_upper_x = isp_merge_upper_x,
+       .isp_merge_upper_y = isp_merge_upper_y,
+-      .isp_mtile_size = isp_mtile_size,
+-      .mtile_stride = mtile_stride,
+-      .ppp_screen = ppp_screen,
++      .isp_merge_scale_x = isp_merge_scale_x,
++      .isp_merge_scale_y = isp_merge_scale_y,
++      .macrotile_array_dev_addr0 = macrotile_array_dev_addrs[0],
++      .macrotile_array_dev_addr1 = macrotile_array_dev_addrs[1],
++      .rgn_header_dev_addr0 = rgn_header_dev_addrs[0],
++      .rgn_header_dev_addr1 = rgn_header_dev_addrs[1],
++      .rtc_dev_addr = rtc_dev_addrs[0],
+       .rgn_header_size = rgn_header_size,
+-      .te_aa = te_aa,
+-      .te_mtile1 = te_mtile1,
+-      .te_mtile2 = te_mtile2,
+-      .te_screen = te_screen,
+-      .tpc_size = tpc_size,
+-      .tpc_stride = tpc_stride,
++      .isp_mtile_size = isp_mtile_size,
+       .max_rts = max_rts,
+    };
+ 
+@@ -1276,9 +1434,8 @@ pvr_srv_rgx_create_hwrt_dataset(int fd,
+                            ret);
+    }
+ 
+-   VG(VALGRIND_MAKE_MEM_DEFINED(cmd.hwrt_dataset,
+-                                sizeof(*cmd.hwrt_dataset) *
+-                                   ROGUE_FWIF_NUM_RTDATAS));
++   hwrt_dataset_out[0] = ret.hwrt_dataset0;
++   hwrt_dataset_out[1] = ret.hwrt_dataset1;
+ 
+    return VK_SUCCESS;
+ }
+@@ -1413,7 +1570,6 @@ pvr_srv_rgx_create_render_context(int fd,
+    struct pvr_srv_rgx_create_render_context_cmd cmd = {
+       .priority = priority,
+       .vdm_callstack_addr = vdm_callstack_addr,
+-      .call_stack_depth = call_stack_depth,
+       .reset_framework_cmd_size = reset_framework_cmd_size,
+       .reset_framework_cmd = reset_framework_cmd,
+       .priv_data = priv_data,
+@@ -1421,7 +1577,6 @@ pvr_srv_rgx_create_render_context(int fd,
+       .static_render_context_state = static_render_context_state,
+       .packed_ccb_size = packed_ccb_size,
+       .context_flags = context_flags,
+-      .robustness_address = robustness_address,
+       .max_ta_deadline_ms = max_geom_deadline_ms,
+       .max_3d_deadline_ms = max_frag_deadline_ms,
+    };
+@@ -1538,7 +1693,6 @@ VkResult pvr_srv_rgx_kick_render2(int fd,
+       .client_ta_fence_value = client_geom_fence_value,
+       .client_ta_update_sync_offset = client_geom_update_sync_offset,
+       .client_ta_update_value = client_geom_update_value,
+-      .sync_pmr_flags = sync_pmr_flags,
+       .cmd_3d = cmd_frag,
+       .cmd_3d_pr = cmd_frag_pr,
+       .cmd_ta = cmd_geom,
+@@ -1547,7 +1701,6 @@ VkResult pvr_srv_rgx_kick_render2(int fd,
+       .client_3d_update_sync_prim_block = client_frag_update_sync_prim_block,
+       .client_ta_fence_sync_prim_block = client_geom_fence_sync_prim_block,
+       .client_ta_update_sync_prim_block = client_geom_update_sync_prim_block,
+-      .sync_pmrs = sync_pmrs,
+       .abort = abort,
+       .kick_3d = kick_frag,
+       .kick_pr = kick_pr,
+@@ -1569,10 +1722,11 @@ VkResult pvr_srv_rgx_kick_render2(int fd,
+       .num_mrts = num_mrts,
+       .pdump_flags = pdump_flags,
+       .render_target_size = render_target_size,
+-      .sync_pmr_count = sync_pmr_count,
+       .cmd_ta_size = cmd_geom_size,
+    };
+ 
++   pvr_dump_cmd("TA", cmd_geom, cmd_geom_size);
++   pvr_dump_cmd("3D", cmd_frag, cmd_frag_size);
+    struct pvr_srv_rgx_kick_ta3d2_ret ret = {
+       .error = PVR_SRV_ERROR_BRIDGE_CALL_FAILED,
+       .update_fence = -1,
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_bridge.h b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_bridge.h
+index 0f2b4c1..e44bbb5 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_bridge.h
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_bridge.h
+@@ -68,7 +68,7 @@
+ #define PVR_SRV_BRIDGE_DMABUF 11UL
+ 
+ #define PVR_SRV_BRIDGE_DMABUF_PHYSMEMIMPORTDMABUF 0UL
+-#define PVR_SRV_BRIDGE_DMABUF_PHYSMEMEXPORTDMABUF 2UL
++#define PVR_SRV_BRIDGE_DMABUF_PHYSMEMEXPORTDMABUF 1UL
+ 
+ #define PVR_SRV_BRIDGE_RGXTQ 128UL
+ 
+@@ -80,7 +80,7 @@
+ 
+ #define PVR_SRV_BRIDGE_RGXCMP_RGXCREATECOMPUTECONTEXT 0UL
+ #define PVR_SRV_BRIDGE_RGXCMP_RGXDESTROYCOMPUTECONTEXT 1UL
+-#define PVR_SRV_BRIDGE_RGXCMP_RGXKICKCDM2 5UL
++#define PVR_SRV_BRIDGE_RGXCMP_RGXKICKCDM2 6UL
+ 
+ #define PVR_SRV_BRIDGE_RGXTA3D 130UL
+ 
+@@ -90,7 +90,7 @@
+ #define PVR_SRV_BRIDGE_RGXTA3D_RGXDESTROYFREELIST 7UL
+ #define PVR_SRV_BRIDGE_RGXTA3D_RGXCREATERENDERCONTEXT 8UL
+ #define PVR_SRV_BRIDGE_RGXTA3D_RGXDESTROYRENDERCONTEXT 9UL
+-#define PVR_SRV_BRIDGE_RGXTA3D_RGXKICKTA3D2 12UL
++#define PVR_SRV_BRIDGE_RGXTA3D_RGXKICKTA3D2 13UL
+ 
+ /******************************************************************************
+    DRM Services specific defines
+@@ -114,13 +114,11 @@
+ #define DRM_IOCTL_SRVKM_CMD \
+    DRM_IOWR(DRM_COMMAND_BASE + DRM_SRVKM_CMD, struct drm_srvkm_cmd)
+ #define DRM_IOCTL_SRVKM_SYNC_FORCE_SW_ONLY_CMD \
+-   DRM_IO(DRM_COMMAND_BASE + DRM_SRVKM_SYNC_FORCE_SW_ONLY_CMD)
+-#define DRM_IOCTL_SRVKM_SW_SYNC_CREATE_FENCE_CMD                   \
+-   DRM_IOWR(DRM_COMMAND_BASE + DRM_SRVKM_SW_SYNC_CREATE_FENCE_CMD, \
+-            struct drm_srvkm_sw_sync_create_fence_data)
+-#define DRM_IOCTL_SRVKM_SW_SYNC_INC_CMD                  \
+-   DRM_IOR(DRM_COMMAND_BASE + DRM_SRVKM_SW_SYNC_INC_CMD, \
+-           struct drm_srvkm_sw_timeline_advance_data)
++   _IO('W', 5)
++#define DRM_IOCTL_SRVKM_SW_SYNC_CREATE_FENCE_CMD \
++   _IOWR('W', 0, struct drm_srvkm_sw_sync_create_fence_data)
++#define DRM_IOCTL_SRVKM_SW_SYNC_INC_CMD \
++   _IOR('W', 1, struct drm_srvkm_sw_timeline_advance_data)
+ #define DRM_IOCTL_SRVKM_INIT \
+    DRM_IOWR(DRM_COMMAND_BASE + DRM_SRVKM_INIT, struct drm_srvkm_init_data)
+ 
+@@ -133,18 +131,16 @@
+ #define SUPPORT_BUFFER_SYNC_SET_OFFSET BITFIELD_BIT(11U)
+ #define OPTIONS_BIT31 BITFIELD_BIT(31U)
+ 
+-#define RGX_BUILD_OPTIONS                       \
+-   (SUPPORT_RGX_SET_OFFSET | DEBUG_SET_OFFSET | \
+-    SUPPORT_BUFFER_SYNC_SET_OFFSET | OPTIONS_BIT31)
++#define RGX_BUILD_OPTIONS (SUPPORT_RGX_SET_OFFSET | OPTIONS_BIT31)
+ 
+ #define PVR_SRV_VERSION_MAJ 1U
+-#define PVR_SRV_VERSION_MIN 17U
++#define PVR_SRV_VERSION_MIN 13U
+ 
+ #define PVR_SRV_VERSION                                              \
+    (((uint32_t)((uint32_t)(PVR_SRV_VERSION_MAJ) & 0xFFFFU) << 16U) | \
+     (((PVR_SRV_VERSION_MIN) & 0xFFFFU) << 0U))
+ 
+-#define PVR_SRV_VERSION_BUILD 6256262
++#define PVR_SRV_VERSION_BUILD 5776728
+ 
+ /*! This flags gets set if the client is 64 Bit compatible. */
+ #define PVR_SRV_FLAGS_CLIENT_64BIT_COMPAT BITFIELD_BIT(5U)
+@@ -188,17 +184,17 @@ enum pvr_srv_error {
+  ******************************************************************************/
+ 
+ struct pvr_srv_bridge_connect_cmd {
++   uint32_t flags;
+    uint32_t build_options;
+-   uint32_t DDK_build;
+    uint32_t DDK_version;
+-   uint32_t flags;
++   uint32_t DDK_build;
+ } PACKED;
+ 
+ struct pvr_srv_bridge_connect_ret {
++   uint8_t kernel_arch;
++   uint32_t capability_flags;
+    uint64_t bvnc;
+    enum pvr_srv_error error;
+-   uint32_t capability_flags;
+-   uint8_t kernel_arch;
+ } PACKED;
+ 
+ /******************************************************************************
+@@ -214,14 +210,14 @@ struct pvr_srv_bridge_disconnect_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_bridge_getmulticoreinfo_cmd {
+-   uint64_t *caps;
+    uint32_t caps_size;
++   uint64_t *caps;
+ } PACKED;
+ 
+ struct pvr_srv_bridge_getmulticoreinfo_ret {
++   uint32_t num_cores;
+    uint64_t *caps;
+    enum pvr_srv_error error;
+-   uint32_t num_cores;
+ } PACKED;
+ 
+ /******************************************************************************
+@@ -230,10 +226,10 @@ struct pvr_srv_bridge_getmulticoreinfo_ret {
+ 
+ struct pvr_srv_bridge_alloc_sync_primitive_block_ret {
+    void *handle;
++   uint32_t addr;
++   uint32_t size;
+    void *pmr;
+    enum pvr_srv_error error;
+-   uint32_t size;
+-   uint32_t addr;
+ } PACKED;
+ 
+ /******************************************************************************
+@@ -273,8 +269,8 @@ struct pvr_srv_devmem_int_ctx_create_cmd {
+ struct pvr_srv_devmem_int_ctx_create_ret {
+    void *server_memctx;
+    void *server_memctx_data;
+-   enum pvr_srv_error error;
+    uint32_t cpu_cache_line_size;
++   enum pvr_srv_error error;
+ } PACKED;
+ 
+ /******************************************************************************
+@@ -298,8 +294,8 @@ struct pvr_srv_heap_count_cmd {
+ } PACKED;
+ 
+ struct pvr_srv_heap_count_ret {
+-   enum pvr_srv_error error;
+    uint32_t heap_count;
++   enum pvr_srv_error error;
+ } PACKED;
+ 
+ /******************************************************************************
+@@ -307,20 +303,20 @@ struct pvr_srv_heap_count_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_heap_cfg_details_cmd {
+-   char *buffer;
+    uint32_t heap_config_index;
+    uint32_t heap_index;
+    uint32_t buffer_size;
++   char *buffer;
+ } PACKED;
+ 
+ struct pvr_srv_heap_cfg_details_ret {
++   char *buffer;
+    pvr_dev_addr_t base_addr;
+    uint64_t size;
+    uint64_t reserved_size;
+-   char *buffer;
+-   enum pvr_srv_error error;
+    uint32_t log2_page_size;
+    uint32_t log2_alignment;
++   enum pvr_srv_error error;
+ } PACKED;
+ 
+ /******************************************************************************
+@@ -328,9 +324,9 @@ struct pvr_srv_heap_cfg_details_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_devmem_int_heap_create_cmd {
++   void *server_memctx;
+    pvr_dev_addr_t base_addr;
+    uint64_t size;
+-   void *server_memctx;
+    uint32_t log2_page_size;
+ } PACKED;
+ 
+@@ -356,9 +352,9 @@ struct pvr_srv_devmem_int_heap_destroy_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_devmem_int_reserve_range_cmd {
++   void *server_heap;
+    pvr_dev_addr_t addr;
+    uint64_t size;
+-   void *server_heap;
+ } PACKED;
+ 
+ struct pvr_srv_devmem_int_reserve_range_ret {
+@@ -383,23 +379,22 @@ struct pvr_srv_bridge_in_devmem_int_unreserve_range_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_physmem_new_ram_backed_locked_pmr_cmd {
+-   uint64_t block_size;
+    uint64_t size;
+-   uint32_t *mapping_table;
+-   const char *annotation;
+-   uint32_t annotation_size;
+-   uint32_t log2_page_size;
++   uint64_t block_size;
+    uint32_t phy_blocks;
+    uint32_t virt_blocks;
+-   uint32_t pdump_flags;
++   uint32_t *mapping_table;
++   uint32_t log2_page_size;
++   uint32_t flags;
++   uint32_t annotation_size;
++   const char *annotation;
+    uint32_t pid;
+-   uint64_t flags;
++   uint32_t pdump_flags;
+ } PACKED;
+ 
+ struct pvr_srv_physmem_new_ram_backed_locked_pmr_ret {
+    void *pmr;
+    enum pvr_srv_error error;
+-   uint64_t out_flags;
+ } PACKED;
+ 
+ /******************************************************************************
+@@ -419,12 +414,12 @@ struct pvr_srv_pmr_unref_unlock_pmr_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_devmem_int_map_pages_cmd {
+-   pvr_dev_addr_t addr;
+-   void *pmr;
+    void *reservation;
++   void *pmr;
+    uint32_t page_count;
+    uint32_t page_offset;
+-   uint64_t flags;
++   uint32_t flags;
++   pvr_dev_addr_t addr;
+ } PACKED;
+ 
+ struct pvr_srv_devmem_int_map_pages_ret {
+@@ -436,8 +431,8 @@ struct pvr_srv_devmem_int_map_pages_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_devmem_int_unmap_pages_cmd {
+-   pvr_dev_addr_t dev_addr;
+    void *reservation;
++   pvr_dev_addr_t dev_addr;
+    uint32_t page_count;
+ } PACKED;
+ 
+@@ -451,9 +446,9 @@ struct pvr_srv_devmem_int_unmap_pages_ret {
+ 
+ struct pvr_srv_devmem_int_map_pmr_cmd {
+    void *server_heap;
+-   void *pmr;
+    void *reservation;
+-   uint64_t flags;
++   void *pmr;
++   uint32_t flags;
+ } PACKED;
+ 
+ struct pvr_srv_devmem_int_map_pmr_ret {
+@@ -478,16 +473,16 @@ struct pvr_srv_devmem_int_unmap_pmr_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_phys_mem_import_dmabuf_cmd {
+-   const char *name;
+    int buffer_fd;
++   uint32_t flags;
+    uint32_t name_size;
+-   uint64_t flags;
++   const char *name;
+ } PACKED;
+ 
+ struct pvr_srv_phys_mem_import_dmabuf_ret {
+-   uint64_t align;
+-   uint64_t size;
+    void *pmr;
++   uint64_t size;
++   uint64_t align;
+    enum pvr_srv_error error;
+ } PACKED;
+ 
+@@ -500,8 +495,8 @@ struct pvr_srv_phys_mem_export_dmabuf_cmd {
+ } PACKED;
+ 
+ struct pvr_srv_phys_mem_export_dmabuf_ret {
+-   enum pvr_srv_error error;
+    int fd;
++   enum pvr_srv_error error;
+ } PACKED;
+ 
+ /******************************************************************************
+@@ -509,18 +504,17 @@ struct pvr_srv_phys_mem_export_dmabuf_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_rgx_create_transfer_context_cmd {
+-   uint64_t robustness_address;
+-   void *priv_data;
+-   uint8_t *reset_framework_cmd;
+-   uint32_t context_flags;
++   uint32_t priority;
+    uint32_t reset_framework_cmd_size;
++   uint8_t *reset_framework_cmd;
++   void *priv_data;
+    uint32_t packed_ccb_size_u8888;
+-   uint32_t priority;
++   uint32_t context_flags;
+ } PACKED;
+ 
+ struct pvr_srv_rgx_create_transfer_context_ret {
+-   void *cli_pmr_mem;
+    void *transfer_context;
++   void *cli_pmr_mem;
+    void *usc_pmr_mem;
+    enum pvr_srv_error error;
+ } PACKED;
+@@ -543,28 +537,29 @@ struct pvr_srv_rgx_destroy_transfer_context_ret {
+ 
+ struct pvr_srv_rgx_submit_transfer2_cmd {
+    void *transfer_context;
++   uint32_t client_cache_op_seq_num;
++   uint32_t prepare_count;
+    uint32_t *client_update_count;
+-   uint32_t *cmd_size;
+-   uint32_t *sync_pmr_flags;
+-   uint32_t *tq_prepare_flags;
++   void ***update_ufo_sync_prim_block;
+    uint32_t **update_sync_offset;
+    uint32_t **update_value;
+-   uint8_t **fw_command;
+-   char *update_fence_name;
+-   void **sync_pmrs;
+-   void ***update_ufo_sync_prim_block;
++   int32_t check_fence;
+    int32_t update_timeline_2d;
+    int32_t update_timeline_3d;
+-   int32_t check_fence;
++   char *update_fence_name;
++   uint32_t *cmd_size;
++   uint8_t **fw_command;
++   uint32_t *tq_prepare_flags;
+    uint32_t ext_job_ref;
+-   uint32_t prepare_count;
+    uint32_t sync_pmr_count;
++   uint32_t *sync_pmr_flags;
++   void **sync_pmrs;
+ } PACKED;
+ 
+ struct pvr_srv_rgx_submit_transfer2_ret {
+-   enum pvr_srv_error error;
+    int32_t update_fence_2d;
+    int32_t update_fence_3d;
++   enum pvr_srv_error error;
+ } PACKED;
+ 
+ /******************************************************************************
+@@ -572,17 +567,16 @@ struct pvr_srv_rgx_submit_transfer2_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_rgx_create_compute_context_cmd {
+-   uint64_t robustness_address;
+-   void *priv_data;
++   uint32_t priority;
++   uint32_t reset_framework_cmd_size;
+    uint8_t *reset_framework_cmd;
++   void *priv_data;
++   uint32_t static_compute_context_state_size;
+    uint8_t *static_compute_context_state;
++   uint32_t packed_ccb_size;
+    uint32_t context_flags;
+-   uint32_t reset_framework_cmd_size;
++   uint64_t robustness_address;
+    uint32_t max_deadline_ms;
+-   uint32_t packed_ccb_size;
+-   /* RGX_CONTEXT_PRIORITY_... flags. */
+-   uint32_t priority;
+-   uint32_t static_compute_context_state_size;
+ } PACKED;
+ 
+ struct pvr_srv_rgx_create_compute_context_ret {
+@@ -607,29 +601,27 @@ struct pvr_srv_rgx_destroy_compute_context_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_rgx_kick_cdm2_cmd {
+-   uint64_t max_deadline_us;
+    void *compute_context;
++   uint32_t client_cache_op_seq_num;
++   uint32_t client_update_count;
++   void **client_update_ufo_sync_prim_block;
+    uint32_t *client_update_offset;
+    uint32_t *client_update_value;
+-   uint32_t *sync_pmr_flags;
+-   uint8_t *cdm_cmd;
+-   char *update_fence_name;
+-   void **client_update_ufo_sync_prim_block;
+-   void **sync_pmrs;
+    int32_t check_fence;
+    int32_t update_timeline;
+-   uint32_t client_update_count;
++   char *update_fence_name;
+    uint32_t cmd_size;
++   uint8_t *cdm_cmd;
++   uint32_t pdump_flags;
+    uint32_t ext_job_ref;
+    uint32_t num_work_groups;
+    uint32_t num_work_items;
+-   uint32_t pdump_flags;
+-   uint32_t sync_pmr_count;
++   uint64_t max_deadline_us;
+ } PACKED;
+ 
+ struct pvr_srv_rgx_kick_cdm2_ret {
+-   enum pvr_srv_error error;
+    int32_t update_fence;
++   enum pvr_srv_error error;
+ } PACKED;
+ 
+ /******************************************************************************
+@@ -637,46 +629,40 @@ struct pvr_srv_rgx_kick_cdm2_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_rgx_create_hwrt_dataset_cmd {
+-   uint64_t flipped_multi_sample_ctl;
+-   uint64_t multi_sample_ctl;
+-   /* ROGUE_FWIF_NUM_RTDATAS sized array. */
+-   const pvr_dev_addr_t *macrotile_array_dev_addrs;
+-   /* ROGUE_FWIF_NUM_RTDATAS sized array. */
+-   const pvr_dev_addr_t *pm_mlist_dev_addrs;
+-   /* ROGUE_FWIF_NUM_GEOMDATAS sized array. */
+-   const pvr_dev_addr_t *rtc_dev_addrs;
+-   /* ROGUE_FWIF_NUM_RTDATAS sized array. */
+-   const pvr_dev_addr_t *rgn_header_dev_addrs;
+-   /* ROGUE_FWIF_NUM_GEOMDATAS sized array. */
+-   const pvr_dev_addr_t *tail_ptrs_dev_addrs;
+-   /* ROGUE_FWIF_NUM_GEOMDATAS sized array. */
+-   const pvr_dev_addr_t *vheap_table_dev_adds;
+-   /* ROGUE_FWIF_NUM_RTDATAS sized array of handles. */
+-   void **hwrt_dataset;
+-   /* ROGUE_FW_MAX_FREELISTS size array of handles. */
++   pvr_dev_addr_t vheap_table_dev_addr;
++   pvr_dev_addr_t pm_mlist_dev_addr0;
++   pvr_dev_addr_t pm_mlist_dev_addr1;
+    void **free_lists;
++   uint32_t ppp_screen;
++   uint64_t multi_sample_ctl;
++   uint64_t flipped_multi_sample_ctl;
++   uint32_t tpc_stride;
++   pvr_dev_addr_t tail_ptrs_dev_addr;
++   uint32_t tpc_size;
++   uint32_t te_screen;
++   uint32_t te_aa;
++   uint32_t te_mtile1;
++   uint32_t te_mtile2;
++   uint32_t mtile_stride;
+    uint32_t isp_merge_lower_x;
+    uint32_t isp_merge_lower_y;
+-   uint32_t isp_merge_scale_x;
+-   uint32_t isp_merge_scale_y;
+    uint32_t isp_merge_upper_x;
+    uint32_t isp_merge_upper_y;
++   uint32_t isp_merge_scale_x;
++   uint32_t isp_merge_scale_y;
++   pvr_dev_addr_t macrotile_array_dev_addr0;
++   pvr_dev_addr_t macrotile_array_dev_addr1;
++   pvr_dev_addr_t rgn_header_dev_addr0;
++   pvr_dev_addr_t rgn_header_dev_addr1;
++   pvr_dev_addr_t rtc_dev_addr;
++   uint64_t rgn_header_size;
+    uint32_t isp_mtile_size;
+-   uint32_t mtile_stride;
+-   uint32_t ppp_screen;
+-   uint32_t rgn_header_size;
+-   uint32_t te_aa;
+-   uint32_t te_mtile1;
+-   uint32_t te_mtile2;
+-   uint32_t te_screen;
+-   uint32_t tpc_size;
+-   uint32_t tpc_stride;
+    uint16_t max_rts;
+ } PACKED;
+ 
+ struct pvr_srv_rgx_create_hwrt_dataset_ret {
+-   /* ROGUE_FWIF_NUM_RTDATAS sized array of handles. */
+-   void **hwrt_dataset;
++   void *hwrt_dataset0;
++   void *hwrt_dataset1;
+    enum pvr_srv_error error;
+ } PACKED;
+ 
+@@ -697,16 +683,16 @@ struct pvr_srv_rgx_destroy_hwrt_dataset_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_rgx_create_free_list_cmd {
+-   pvr_dev_addr_t free_list_dev_addr;
+-   uint64_t pmr_offset;
+    void *mem_ctx_priv_data;
+-   void *free_list_pmr;
+-   void *global_free_list;
+-   enum pvr_srv_bool free_list_check;
++   uint32_t max_free_list_pages;
++   uint32_t init_free_list_pages;
+    uint32_t grow_free_list_pages;
+    uint32_t grow_param_threshold;
+-   uint32_t init_free_list_pages;
+-   uint32_t max_free_list_pages;
++   void *global_free_list;
++   enum pvr_srv_bool free_list_check;
++   pvr_dev_addr_t free_list_dev_addr;
++   void *free_list_pmr;
++   uint64_t pmr_offset;
+ } PACKED;
+ 
+ struct pvr_srv_rgx_create_free_list_ret {
+@@ -731,24 +717,23 @@ struct pvr_srv_rgx_destroy_free_list_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_rgx_create_render_context_cmd {
+-   pvr_dev_addr_t vdm_callstack_addr;
+-   uint64_t robustness_address;
+-   void *priv_data;
+-   uint8_t *reset_framework_cmd;
+-   uint8_t *static_render_context_state;
+-#define RGX_CONTEXT_FLAG_DISABLESLR BITFIELD_BIT(0U)
+-   uint32_t context_flags;
+-   uint32_t reset_framework_cmd_size;
+-   uint32_t max_3d_deadline_ms;
+-   uint32_t max_ta_deadline_ms;
+-   uint32_t packed_ccb_size;
+ #define RGX_CONTEXT_PRIORITY_REALTIME UINT32_MAX
+ #define RGX_CONTEXT_PRIORITY_HIGH 2U
+ #define RGX_CONTEXT_PRIORITY_MEDIUM 1U
+ #define RGX_CONTEXT_PRIORITY_LOW 0U
+    uint32_t priority;
++   pvr_dev_addr_t vdm_callstack_addr;
++   uint32_t reset_framework_cmd_size;
++   uint8_t *reset_framework_cmd;
++   void *priv_data;
+    uint32_t static_render_context_state_size;
+-   uint32_t call_stack_depth;
++   uint8_t *static_render_context_state;
++   uint32_t packed_ccb_size;
++#define RGX_CONTEXT_FLAG_DISABLESLR BITFIELD_BIT(0U)
++   uint32_t context_flags;
++   uint64_t robustness_address;
++   uint32_t max_ta_deadline_ms;
++   uint32_t max_3d_deadline_ms;
+ } PACKED;
+ 
+ struct pvr_srv_rgx_create_render_context_ret {
+@@ -773,57 +758,58 @@ struct pvr_srv_rgx_destroy_render_context_ret {
+  ******************************************************************************/
+ 
+ struct pvr_srv_rgx_kick_ta3d2_cmd {
+-   uint64_t deadline;
+-   void *hw_rt_dataset;
+-   void *msaa_scratch_buffer;
+-   void *pr_fence_ufo_sync_prim_block;
+    void *render_ctx;
+-   void *zs_buffer;
+-   uint32_t *client_3d_update_sync_offset;
+-   uint32_t *client_3d_update_value;
++   uint32_t client_cache_op_seq_num;
++   uint32_t client_ta_fence_count;
++   void **client_ta_fence_sync_prim_block;
+    uint32_t *client_ta_fence_sync_offset;
+    uint32_t *client_ta_fence_value;
++   uint32_t client_ta_update_count;
++   void **client_ta_update_sync_prim_block;
+    uint32_t *client_ta_update_sync_offset;
+    uint32_t *client_ta_update_value;
+-   uint32_t *sync_pmr_flags;
+-   uint8_t *cmd_3d;
+-   uint8_t *cmd_3d_pr;
+-   uint8_t *cmd_ta;
+-   char *update_fence_name;
+-   char *update_fence_name_3d;
++   uint32_t client_3d_update_count;
+    void **client_3d_update_sync_prim_block;
+-   void **client_ta_fence_sync_prim_block;
+-   void **client_ta_update_sync_prim_block;
+-   void **sync_pmrs;
+-   enum pvr_srv_bool abort;
+-   enum pvr_srv_bool kick_3d;
+-   enum pvr_srv_bool kick_pr;
+-   enum pvr_srv_bool kick_ta;
++   uint32_t *client_3d_update_sync_offset;
++   uint32_t *client_3d_update_value;
++   void *pr_fence_ufo_sync_prim_block;
++   uint32_t client_pr_fence_ufo_sync_offset;
++   uint32_t client_pr_fence_value;
+    int32_t check_fence;
+-   int32_t check_fence_3d;
+    int32_t update_timeline;
++   char *update_fence_name;
++   int32_t check_fence_3d;
+    int32_t update_timeline_3d;
+-   uint32_t cmd_3d_size;
++   char *update_fence_name_3d;
++   uint32_t cmd_ta_size;
++   uint8_t *cmd_ta;
+    uint32_t cmd_3d_pr_size;
+-   uint32_t client_3d_update_count;
+-   uint32_t client_ta_fence_count;
+-   uint32_t client_ta_update_count;
++   uint8_t *cmd_3d_pr;
++   uint32_t cmd_3d_size;
++   uint8_t *cmd_3d;
+    uint32_t ext_job_ref;
++   enum pvr_srv_bool kick_ta;
++   enum pvr_srv_bool kick_pr;
++   enum pvr_srv_bool kick_3d;
++   enum pvr_srv_bool abort;
++   uint32_t pdump_flags;
++   void *hw_rt_dataset;
++   void *zs_buffer;
++   void *msaa_scratch_buffer;
++   uint32_t sync_pmr_count;
++   uint32_t *sync_pmr_flags;
++   void **sync_pmrs;
++   uint32_t render_target_size;
+    uint32_t num_draw_calls;
+    uint32_t num_indices;
+    uint32_t num_mrts;
+-   uint32_t pdump_flags;
+-   uint32_t client_pr_fence_ufo_sync_offset;
+-   uint32_t client_pr_fence_value;
+-   uint32_t render_target_size;
+-   uint32_t sync_pmr_count;
+-   uint32_t cmd_ta_size;
++   uint64_t deadline;
+ } PACKED;
+ 
+ struct pvr_srv_rgx_kick_ta3d2_ret {
+-   enum pvr_srv_error error;
+    int32_t update_fence;
+    int32_t update_fence_3d;
++   enum pvr_srv_error error;
+ } PACKED;
+ 
+ /******************************************************************************
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_common.c b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_common.c
+index d75585c..a36e914 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_common.c
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_common.c
+@@ -39,28 +39,18 @@ VkResult pvr_srv_create_timeline(int render_fd, int *const fd_out)
+    VkResult result;
+    int fd;
+ 
+-   render_path = drmGetRenderDeviceNameFromFd(render_fd);
+-   if (!render_path) {
+-      return vk_errorf(NULL,
+-                       VK_ERROR_UNKNOWN,
+-                       "Could not get render path from fd.");
+-   }
++   (void)render_fd;
++   (void)render_path;
++   (void)result;
+ 
+-   fd = open(render_path, O_CLOEXEC | O_RDWR);
+-   drmFree((void *)render_path);
++   fd = open("/dev/pvr_sync", O_CLOEXEC | O_RDWR);
+    if (fd == -1) {
+       return vk_errorf(NULL,
+                        VK_ERROR_UNKNOWN,
+-                       "Could not create timeline fd, errno: %s",
++                       "Could not open /dev/pvr_sync, errno: %s",
+                        strerror(errno));
+    }
+ 
+-   result = pvr_srv_init_module(fd, PVR_SRVKM_MODULE_TYPE_SYNC);
+-   if (result != VK_SUCCESS) {
+-      close(fd);
+-      return result;
+-   }
+-
+    *fd_out = fd;
+ 
+    return VK_SUCCESS;
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_compute.c b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_compute.c
+index 4bb75fd..bfa98f3 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_compute.c
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_compute.c
+@@ -92,7 +92,7 @@ VkResult pvr_srv_winsys_compute_ctx_create(
+    result = pvr_srv_rgx_create_compute_context(
+       ws->render_fd,
+       pvr_srv_from_winsys_priority(create_info->priority),
+-      sizeof(reset_cmd) - sizeof(reset_cmd.regs),
++      4U,
+       (uint8_t *)&reset_cmd,
+       srv_ws->server_memctx_data,
+       sizeof(static_state),
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_render.c b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_render.c
+index 3d68f1d..80dc607 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_render.c
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_render.c
+@@ -263,7 +263,7 @@ VkResult pvr_srv_winsys_render_ctx_create(
+       pvr_srv_from_winsys_priority(create_info->priority),
+       create_info->vdm_callstack_addr,
+       call_stack_depth,
+-      sizeof(reset_cmd) - sizeof(reset_cmd.regs),
++      4U,
+       (uint8_t *)&reset_cmd,
+       srv_ws->server_memctx_data,
+       sizeof(static_state),
+diff --git a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_transfer.c b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_transfer.c
+index be07047..5097bf5 100644
+--- a/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_transfer.c
++++ b/src/imagination/vulkan/winsys/pvrsrvkm/pvr_srv_job_transfer.c
+@@ -83,7 +83,7 @@ VkResult pvr_srv_winsys_transfer_ctx_create(
+    result = pvr_srv_rgx_create_transfer_context(
+       ws->render_fd,
+       pvr_srv_from_winsys_priority(create_info->priority),
+-      sizeof(reset_cmd) - sizeof(reset_cmd.regs),
++      4U,
+       (uint8_t *)&reset_cmd,
+       srv_ws->server_memctx_data,
+       packed_ccb_size,
